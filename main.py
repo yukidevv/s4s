@@ -3,7 +3,7 @@
 import feedparser
 import json
 
-#対象サイトをリストに追加する
+#test
 RSS_URL = ["https://yukidev.net/blog/index.xml"]
 
 def main() -> int:
