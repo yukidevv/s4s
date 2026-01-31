@@ -1,0 +1,10 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    volumes:
+      - .:/app
+    restart: always
+    environment:
+      - DATABASE_URL=/app/data/stars.db
