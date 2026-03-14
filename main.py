@@ -3,17 +3,21 @@
 import feedparser
 import hashlib
 import argparse
-import os
 from util.url import get_domain
-from util.discord import notify
+from util.feed import discover_feed
 from db.db import StartsDB
 
 
 def cmd_add(db, args):
-  url = args.url
-  domain = get_domain(url)
-  db.add_source(url, domain)
-  print(f"追加しました: {url}")
+  try:
+    feed = discover_feed(args.url)
+  except ValueError as e:
+    print(f"エラー: {e}")
+    return
+  domain = get_domain(feed["url"])
+  name = feed["name"] or domain
+  db.add_source(feed["url"], domain, name)
+  print(f"追加しました: {feed['url']} ({name})")
 
 
 def cmd_list(db, args):
@@ -22,7 +26,7 @@ def cmd_list(db, args):
     print("登録されているフィードはありません")
     return
   for s in sources:
-    print(f"{s['domain']}\t{s['url']}\t(登録日: {s['created_at']})")
+    print(f"{s['name']}\t{s['url']}\t(登録日: {s['created_at']})")
 
 
 def cmd_delete(db, args):
@@ -47,16 +51,11 @@ def cmd_run(db, args):
       content_hash = hashlib.md5(entry.link.encode()).hexdigest()
       if content_hash in existing_hashes:
         break
-      db.register_feed(entry.title, content_hash, source["domain"])
+      db.register_feed(entry.title, entry.link, source["domain"], source["name"])
       existing_hashes.add(content_hash)
       new_entries.append({"title": entry.title, "link": entry.link, "domain": source["domain"]})
 
   print(f"{len(new_entries)} 件の新着エントリを取得しました")
-
-  webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
-  if webhook_url and new_entries:
-    notify(webhook_url, new_entries)
-    print("Discordに通知しました")
 
 
 def main():
