@@ -192,7 +192,7 @@
 
   <script>
     const TOKEN = new URLSearchParams(location.search).get("token") ?? "";
-    const BASE = location.pathname.replace(/\/[^/]*$/, "").replace(/\/$/, "");
+    const BASE = location.pathname.replace(/\/$/, "");
     const api = (path) => `${BASE}${path}?token=${encodeURIComponent(TOKEN)}`;
 
     function switchTab(name) {
