@@ -10,4 +10,3 @@ services:
     restart: always
     environment:
       - DATABASE_URL=/app/data/stars.db
-      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}

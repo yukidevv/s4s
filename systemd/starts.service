@@ -4,8 +4,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/starts
-ExecStart=/opt/starts/.venv/bin/python main.py run
-EnvironmentFile=/etc/starts/env
+WorkingDirectory=/srv/www/htdocs/starts
+ExecStart=/srv/www/htdocs/starts/.venv/bin/python main.py run
 StandardOutput=journal
 StandardError=journal

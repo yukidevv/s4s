@@ -4,15 +4,16 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
 
-def discover_feed_url(url: str) -> str:
+def discover_feed(url: str) -> dict:
   """
-  URLがフィードであればそのまま返す。
-  HTMLページであれば <link rel="alternate"> からフィードURLを探して返す。
+  URLがフィードであればそのまま使う。
+  HTMLページであれば <link rel="alternate"> からフィードURLを探す。
   見つからなければ ValueError を送出する。
+  戻り値: {"url": feed_url, "name": feed_title}
   """
   d = feedparser.parse(url)
   if d.entries or d.feed.get("title"):
-    return url
+    return {"url": url, "name": d.feed.get("title", "")}
 
   try:
     resp = requests.get(url, timeout=10, headers={"User-Agent": "starts/1.0"})
@@ -26,6 +27,8 @@ def discover_feed_url(url: str) -> str:
     if t in ("application/rss+xml", "application/atom+xml"):
       href = link.get("href", "")
       if href:
-        return urljoin(url, href)
+        feed_url = urljoin(url, href)
+        d = feedparser.parse(feed_url)
+        return {"url": feed_url, "name": d.feed.get("title", "")}
 
   raise ValueError("フィードが見つかりませんでした")

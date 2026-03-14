@@ -11,47 +11,51 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Web UI 起動 (http://localhost:8000)
-uvicorn api:app --reload
+uvicorn api:app --reload --host 0.0.0.0
 
-# フィード管理 (CLI)
-python main.py add <URL>     # フィードを追加
-python main.py list          # 登録済みフィード一覧
-python main.py delete <URL>  # フィードを削除
-python main.py run           # フィードを取得して新着を記録
+python main.py run  # フィードを取得して新着を記録
 
 # Dockerで実行
-docker compose up -d         # Web UI が :8000 で起動
+docker compose up -d --build  # Web UI が :8000 で起動
 docker compose exec app python main.py run
 ```
 
 ## アーキテクチャ
 
-RSSフィードを取得し、未読エントリをSQLiteに記録するCLIツール。
+RSSフィードを取得し、未読エントリをSQLiteに記録してWeb UIで閲覧するツール。
 
 **データフロー:**
-1. `main.py` — RSS_URLリストからfeedparserでフィード取得
+1. `main.py run` — `sources` テーブルのフィードURLをfeedparserで取得
 2. エントリのURLをMD5ハッシュ化して重複チェック（`StartsDB.fetch_all()`）
-3. 未取得エントリを`StartsDB.register_feed()`でDBに保存
-4. 通知処理（未実装・TODO）
+3. 未取得エントリを `StartsDB.register_feed()` でDBに保存
+4. Web UI (`http://localhost:8000`) で新着一覧を閲覧・既読処理
 
 **モジュール構成:**
-- `db/db.py` — `StartsDB`クラス。SQLite接続・テーブル初期化・CRUD操作
+- `api.py` — FastAPI。REST APIの提供と `static/` の配信
+- `db/db.py` — `StartsDB` クラス。SQLite接続・テーブル初期化・CRUD操作
+- `util/feed.py` — `discover_feed(url)` でフィードURLとサイト名を自動検出
 - `util/url.py` — `get_domain(url)` でURLからドメイン名を抽出
+- `static/index.html` — 新着一覧（既読ボタン付き）とフィード管理のSPA
 - `data/` — SQLiteのDBファイル置き場（`stars.db`）、gitignore済み
 
 **DBスキーマ:**
 ```sql
--- 取得済みエントリの記録（重複チェック用）
+-- 取得済みエントリの記録
 CREATE TABLE feeds (
-  url_2_hash TEXT PRIMARY KEY,  -- エントリURLのMD5ハッシュ
-  domain     TEXT,
-  created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))  -- JST
+  url_2_hash  TEXT PRIMARY KEY,  -- エントリURLのMD5ハッシュ
+  title       TEXT,
+  link        TEXT,
+  domain      TEXT,
+  source_name TEXT,
+  read        INTEGER NOT NULL DEFAULT 0,  -- 1=既読
+  created_at  TIMESTAMP DEFAULT (datetime('now', '+9 hours'))  -- JST
 )
 
 -- 購読するRSSフィードの管理
 CREATE TABLE sources (
   url        TEXT PRIMARY KEY,
   domain     TEXT,
+  name       TEXT,
   created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
 )
 ```
@@ -59,16 +63,11 @@ CREATE TABLE sources (
 ## サーバへのデプロイ (systemd)
 
 ```bash
-# アプリを /opt/starts に配置し仮想環境を作成
-git clone <repo> /opt/starts
-cd /opt/starts
+# アプリを /srv/www/htdocs/starts に配置し仮想環境を作成
+git clone <repo> /srv/www/htdocs/starts
+cd /srv/www/htdocs/starts
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
-
-# 環境変数ファイルを設置
-sudo mkdir /etc/starts
-sudo cp systemd/env.example /etc/starts/env
-sudo vim /etc/starts/env  # DISCORD_WEBHOOK_URL を設定
 
 # systemd ユニットをインストール
 sudo cp systemd/starts.service /etc/systemd/system/
@@ -85,4 +84,4 @@ journalctl -u starts.service
 ## 環境
 
 - Python 3.14（Docker: `python:3.14.2-slim-trixie`）、ローカル仮想環境は `.venv/`
-- SQLiteのDBファイルは `data/stars.db`（環境変数 `DATABASE_URL` で上書き可）
+- SQLiteのDBファイルは `data/stars.db`
