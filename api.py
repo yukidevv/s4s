@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from util.url import get_domain
 from util.feed import discover_feed
@@ -11,25 +11,25 @@ from db.db import StartsDB
 
 app = FastAPI()
 
-def verify_token(token: str = Query(default="")):
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
   expected = os.environ.get("STARTS_TOKEN", "")
-  if not expected or token != expected:
-    raise HTTPException(status_code=403, detail="Forbidden")
+  if expected and request.query_params.get("token") != expected:
+    return Response("Forbidden", status_code=403)
+  return await call_next(request)
 
 class SourceRequest(BaseModel):
   url: str
 
 
 @app.get("/api/entries")
-def list_entries(token: str = Query(default="")):
-  verify_token(token)
+def list_entries():
   db = StartsDB()
   return db.fetch_entries()
 
 
 @app.delete("/api/entries/{entry_id}")
-def delete_entry(entry_id: str, token: str = Query(default="")):
-  verify_token(token)
+def delete_entry(entry_id: str):
   db = StartsDB()
   if not db.delete_entry(entry_id):
     raise HTTPException(status_code=404, detail="見つかりません")
@@ -37,15 +37,13 @@ def delete_entry(entry_id: str, token: str = Query(default="")):
 
 
 @app.get("/api/sources")
-def list_sources(token: str = Query(default="")):
-  verify_token(token)
+def list_sources():
   db = StartsDB()
   return db.get_sources()
 
 
 @app.post("/api/sources", status_code=201)
-def add_source(body: SourceRequest, token: str = Query(default="")):
-  verify_token(token)
+def add_source(body: SourceRequest):
   db = StartsDB()
   if not get_domain(body.url):
     raise HTTPException(status_code=400, detail="無効なURLです")
@@ -60,8 +58,7 @@ def add_source(body: SourceRequest, token: str = Query(default="")):
 
 
 @app.delete("/api/sources")
-def delete_source(body: SourceRequest, token: str = Query(default="")):
-  verify_token(token)
+def delete_source(body: SourceRequest):
   db = StartsDB()
   if not db.delete_source(body.url):
     raise HTTPException(status_code=404, detail="見つかりません")
