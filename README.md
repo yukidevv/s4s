@@ -49,8 +49,8 @@ python main.py run           # 新着を取得してDBに記録
 ## サーバーへのデプロイ (systemd)
 
 ```bash
-git clone <repo> /opt/starts
-cd /opt/starts
+git clone <repo> /srv/www/htdocs/starts
+cd /srv/www/htdocs/starts
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 

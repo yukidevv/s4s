@@ -63,9 +63,9 @@ CREATE TABLE sources (
 ## サーバへのデプロイ (systemd)
 
 ```bash
-# アプリを /opt/starts に配置し仮想環境を作成
-git clone <repo> /opt/starts
-cd /opt/starts
+# アプリを /srv/www/htdocs/starts に配置し仮想環境を作成
+git clone <repo> /srv/www/htdocs/starts
+cd /srv/www/htdocs/starts
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
