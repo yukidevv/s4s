@@ -273,7 +273,7 @@
       }
 
       input.value = "";
-      await loadSources();
+      await Promise.all([loadSources(), loadEntries()]);
     }
 
     async function deleteSource(url) {
