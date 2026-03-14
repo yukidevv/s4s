@@ -28,6 +28,23 @@ pip install -r requirements.txt
 uvicorn api:app --reload --host 0.0.0.0
 ```
 
+## 認証
+
+クエリパラメータにトークンを付与することでアクセスを制限できます。
+
+```bash
+# トークンを生成して環境変数に設定
+export STARTS_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+docker compose up -d --build
+```
+
+アクセスURL：
+```
+https://example.com/?token=<token>
+```
+
+このURLをスマホにブックマークしてください。トークンなしのアクセスは403になります。
+
 ## Web UI
 
 `http://localhost:8000` にアクセスすると以下が利用できます。

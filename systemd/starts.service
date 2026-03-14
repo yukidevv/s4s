@@ -1,5 +1,5 @@
 [Unit]
-Description=starts RSS reader - fetch and notify
+Description=starts RSS reader - fetch feeds
 After=network.target
 
 [Service]

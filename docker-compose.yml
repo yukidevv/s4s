@@ -9,4 +9,4 @@ services:
       - "8000:8000"
     restart: always
     environment:
-      - DATABASE_URL=/app/data/stars.db
+      - STARTS_TOKEN=${STARTS_TOKEN}

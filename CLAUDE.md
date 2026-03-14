@@ -85,3 +85,9 @@ journalctl -u starts.service
 
 - Python 3.14（Docker: `python:3.14.2-slim-trixie`）、ローカル仮想環境は `.venv/`
 - SQLiteのDBファイルは `data/stars.db`
+- `STARTS_TOKEN` 環境変数でトークン認証を設定（未設定時は全リクエストを拒否）
+  ```bash
+  export STARTS_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+  docker compose up -d --build
+  # アクセス: http://localhost:8000/?token=<token>
+  ```
