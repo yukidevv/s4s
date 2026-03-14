@@ -13,11 +13,7 @@ pip install -r requirements.txt
 # Web UI 起動 (http://localhost:8000)
 uvicorn api:app --reload --host 0.0.0.0
 
-# フィード管理 (CLI)
-python main.py add <URL>     # フィードを追加（サイト名を自動取得）
-python main.py list          # 登録済みフィード一覧
-python main.py delete <URL>  # フィードを削除
-python main.py run           # フィードを取得して新着を記録
+python main.py run  # フィードを取得して新着を記録
 
 # Dockerで実行
 docker compose up -d --build  # Web UI が :8000 で起動
