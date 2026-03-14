@@ -32,15 +32,26 @@ uvicorn api:app --reload --host 0.0.0.0
 
 クエリパラメータにトークンを付与することでアクセスを制限できます。
 
-```bash
-# トークンを生成して環境変数に設定
-export STARTS_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
-docker compose up -d --build
+`docker-compose.override.yml` をプロジェクトルートに作成します（gitignore済み）：
+
+```yaml
+services:
+  app:
+    environment:
+      - STARTS_TOKEN=<your-token>
 ```
+
+トークンの生成：
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+`docker compose up` 時に自動で読み込まれます。
 
 アクセスURL：
 ```
-https://example.com/?token=<token>
+https://example.com/starts/?token=<token>
 ```
 
 このURLをスマホにブックマークしてください。トークンなしのアクセスは403になります。
