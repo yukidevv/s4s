@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import os
+import hashlib
+import feedparser
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
@@ -54,6 +56,16 @@ def add_source(body: SourceRequest):
   domain = get_domain(feed["url"])
   name = feed["name"] or domain
   db.add_source(feed["url"], domain, name)
+
+  existing_hashes = db.fetch_all()
+  d = feedparser.parse(feed["url"])
+  for entry in d.entries:
+    content_hash = hashlib.md5(entry.link.encode()).hexdigest()
+    if content_hash in existing_hashes:
+      break
+    db.register_feed(entry.title, entry.link, domain, name)
+    existing_hashes.add(content_hash)
+
   return {"url": feed["url"], "domain": domain, "name": name}
 
 
