@@ -283,7 +283,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       });
-      await loadSources();
+      await Promise.all([loadSources(), loadEntries()]);
     }
 
     document.getElementById("urlInput").addEventListener("keydown", e => {

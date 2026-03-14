@@ -63,6 +63,7 @@ class StartsDB:
     return [{"url": r[0], "domain": r[1], "name": r[2], "created_at": r[3]} for r in res]
 
   def delete_source(self, url):
+    self.conn.execute("DELETE FROM feeds WHERE domain = (SELECT domain FROM sources WHERE url = ?)", (url,))
     cur = self.conn.execute("DELETE FROM sources WHERE url = ?", (url,))
     self.conn.commit()
     return cur.rowcount > 0
