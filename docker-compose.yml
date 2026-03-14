@@ -5,6 +5,9 @@ services:
       dockerfile: ./docker/app/Dockerfile
     volumes:
       - .:/app
+    ports:
+      - "8000:8000"
     restart: always
     environment:
       - DATABASE_URL=/app/data/stars.db
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}

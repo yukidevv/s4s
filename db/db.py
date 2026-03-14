@@ -12,24 +12,40 @@ class StartsDB:
   def _init_db(self):
       self.conn.execute("PRAGMA journal_mode=WAL;")
       self.conn.execute("""
-        CREATE TABLE IF NOT EXISTS feeds 
+        CREATE TABLE IF NOT EXISTS feeds
         (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          url TEXT UNIQUE,
-          keywords TEXT
+          url_2_hash TEXT PRIMARY KEY,
+          domain TEXT,
+          created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
         )
       """)
       self.conn.execute("""
-        CREATE TABLE IF NOT EXISTS history 
+        CREATE TABLE IF NOT EXISTS sources
         (
-          link TEXT PRIMARY KEY,
-          title TEXT,
+          url TEXT PRIMARY KEY,
+          domain TEXT,
           created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
         )
       """)
       self.conn.commit()
-  def register_feed(self, title, link):
-    self.conn.execute("INSERT INTO feeds (url) VALUES (?)", (link, ))
-    self.conn.execute("INSERT INTO history (link) VALUES (?)", (link, ))
+
+  def register_feed(self, title, link, domain):
+    self.conn.execute("INSERT INTO feeds (url_2_hash, domain) VALUES (?, ?)", (link, domain))
     self.conn.commit()
 
+  def fetch_all(self):
+    res = self.conn.execute("SELECT url_2_hash from feeds").fetchall()
+    return {r[0] for r in res}
+
+  def add_source(self, url, domain):
+    self.conn.execute("INSERT OR IGNORE INTO sources (url, domain) VALUES (?, ?)", (url, domain))
+    self.conn.commit()
+
+  def get_sources(self):
+    res = self.conn.execute("SELECT url, domain, created_at FROM sources ORDER BY created_at").fetchall()
+    return [{"url": r[0], "domain": r[1], "created_at": r[2]} for r in res]
+
+  def delete_source(self, url):
+    cur = self.conn.execute("DELETE FROM sources WHERE url = ?", (url,))
+    self.conn.commit()
+    return cur.rowcount > 0

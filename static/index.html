@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>starts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+      padding: 2rem;
+    }
+
+    h1 { font-size: 1.5rem; margin-bottom: 1.5rem; }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+
+    .add-form {
+      display: flex;
+      gap: .5rem;
+    }
+
+    .add-form input {
+      flex: 1;
+      padding: .5rem .75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: .5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .9rem;
+    }
+
+    .btn-add    { background: #5865f2; color: #fff; }
+    .btn-add:hover { background: #4752c4; }
+    .btn-delete { background: #f0f0f0; color: #c00; }
+    .btn-delete:hover { background: #fdd; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: .6rem .75rem; }
+    th { font-size: .8rem; color: #666; border-bottom: 1px solid #eee; }
+    td { border-bottom: 1px solid #f0f0f0; font-size: .95rem; }
+    tr:last-child td { border-bottom: none; }
+
+    .url-cell { word-break: break-all; }
+    .error { color: #c00; font-size: .9rem; margin-top: .5rem; }
+    .empty { color: #999; font-size: .9rem; text-align: center; padding: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>starts</h1>
+
+  <div class="card">
+    <div class="add-form">
+      <input id="urlInput" type="url" placeholder="https://example.com/feed" />
+      <button class="btn-add" onclick="addSource()">追加</button>
+    </div>
+    <div id="addError" class="error"></div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>ドメイン</th>
+          <th>URL</th>
+          <th>登録日</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="sourceList"></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function loadSources() {
+      const res = await fetch("/api/sources");
+      const sources = await res.json();
+      const tbody = document.getElementById("sourceList");
+
+      if (sources.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">登録されているフィードはありません</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = sources.map(s => `
+        <tr>
+          <td>${s.domain}</td>
+          <td class="url-cell">${s.url}</td>
+          <td>${s.created_at}</td>
+          <td><button class="btn-delete" onclick="deleteSource('${s.url}')">削除</button></td>
+        </tr>
+      `).join("");
+    }
+
+    async function addSource() {
+      const input = document.getElementById("urlInput");
+      const errEl = document.getElementById("addError");
+      errEl.textContent = "";
+
+      const url = input.value.trim();
+      if (!url) return;
+
+      const res = await fetch("/api/sources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        errEl.textContent = data.detail ?? "エラーが発生しました";
+        return;
+      }
+
+      input.value = "";
+      await loadSources();
+    }
+
+    async function deleteSource(url) {
+      if (!confirm(`削除しますか？\n${url}`)) return;
+
+      await fetch("/api/sources", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+
+      await loadSources();
+    }
+
+    document.getElementById("urlInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") addSource();
+    });
+
+    loadSources();
+  </script>
+</body>
+</html>

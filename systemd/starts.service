@@ -1,0 +1,11 @@
+[Unit]
+Description=starts RSS reader - fetch and notify
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/starts
+ExecStart=/opt/starts/.venv/bin/python main.py run
+EnvironmentFile=/etc/starts/env
+StandardOutput=journal
+StandardError=journal
