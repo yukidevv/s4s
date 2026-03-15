@@ -214,21 +214,28 @@
         return;
       }
 
-      const siteIndex = {};
-      let siteCount = 0;
-      el.innerHTML = entries.map(e => {
+      const groups = [];
+      const groupIndex = {};
+      for (const e of entries) {
         const key = e.source_name ?? e.domain;
-        if (!(key in siteIndex)) siteIndex[key] = siteCount++;
-        const zebra = siteIndex[key] % 2 === 0 ? "zebra-even" : "zebra-odd";
-        return `
+        if (!(key in groupIndex)) {
+          groupIndex[key] = groups.length;
+          groups.push({ key, entries: [] });
+        }
+        groups[groupIndex[key]].entries.push(e);
+      }
+
+      el.innerHTML = groups.flatMap((g, i) => {
+        const zebra = i % 2 === 0 ? "zebra-even" : "zebra-odd";
+        return g.entries.map(e => `
         <div class="entry-card ${zebra}" id="entry-${e.id}">
           <div class="entry-meta">
-            <span>${key}</span>
+            <span>${g.key}</span>
             <span>${e.created_at}</span>
             <button class="btn-read" onclick="markRead('${e.id}')">既読</button>
           </div>
           <div class="entry-title"><a href="${e.link}" target="_blank" rel="noopener">${e.title ?? "(タイトルなし)"}</a></div>
-        </div>`;
+        </div>`);
       }).join("");
     }
 
