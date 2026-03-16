@@ -16,12 +16,17 @@ app = FastAPI()
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
   expected = os.environ.get("STARTS_TOKEN", "")
-  if expected and request.query_params.get("token") != expected:
+  if expected and request.url.path not in ("/sw.js",) and request.query_params.get("token") != expected:
     return Response("Forbidden", status_code=403)
   return await call_next(request)
 
 class SourceRequest(BaseModel):
   url: str
+
+class PushSubscriptionRequest(BaseModel):
+  endpoint: str
+  p256dh: str
+  auth: str
 
 
 @app.get("/api/entries")
@@ -75,6 +80,33 @@ def delete_source(body: SourceRequest):
   if not db.delete_source(body.url):
     raise HTTPException(status_code=404, detail="見つかりません")
   return {"deleted": body.url}
+
+
+@app.get("/sw.js")
+def service_worker():
+  return FileResponse("static/sw.js", media_type="text/javascript")
+
+
+@app.get("/api/vapid-public-key")
+def get_vapid_public_key():
+  key = os.environ.get("VAPID_PUBLIC_KEY", "")
+  if not key:
+    raise HTTPException(status_code=503, detail="VAPID keys not configured")
+  return {"publicKey": key}
+
+
+@app.post("/api/push/subscribe", status_code=201)
+def subscribe_push(body: PushSubscriptionRequest):
+  db = StartsDB()
+  db.add_push_subscription(body.endpoint, body.p256dh, body.auth)
+  return {"subscribed": True}
+
+
+@app.delete("/api/push/subscribe")
+def unsubscribe_push(body: PushSubscriptionRequest):
+  db = StartsDB()
+  db.delete_push_subscription(body.endpoint)
+  return {"unsubscribed": True}
 
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
