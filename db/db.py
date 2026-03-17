@@ -32,6 +32,15 @@ class StartsDB:
           created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
         )
       """)
+      self.conn.execute("""
+        CREATE TABLE IF NOT EXISTS push_subscriptions
+        (
+          endpoint   TEXT PRIMARY KEY,
+          p256dh     TEXT NOT NULL,
+          auth       TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
+        )
+      """)
       try:
         self.conn.execute("ALTER TABLE feeds ADD COLUMN saved INTEGER NOT NULL DEFAULT 0")
       except Exception:
@@ -87,3 +96,18 @@ class StartsDB:
     cur = self.conn.execute("DELETE FROM sources WHERE url = ?", (url,))
     self.conn.commit()
     return cur.rowcount > 0
+
+  def add_push_subscription(self, endpoint, p256dh, auth):
+    self.conn.execute(
+      "INSERT OR REPLACE INTO push_subscriptions (endpoint, p256dh, auth) VALUES (?, ?, ?)",
+      (endpoint, p256dh, auth)
+    )
+    self.conn.commit()
+
+  def delete_push_subscription(self, endpoint):
+    self.conn.execute("DELETE FROM push_subscriptions WHERE endpoint = ?", (endpoint,))
+    self.conn.commit()
+
+  def get_push_subscriptions(self):
+    res = self.conn.execute("SELECT endpoint, p256dh, auth FROM push_subscriptions").fetchall()
+    return [{"endpoint": r[0], "p256dh": r[1], "auth": r[2]} for r in res]
