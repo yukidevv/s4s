@@ -82,6 +82,28 @@ def delete_source(body: SourceRequest):
   return {"deleted": body.url}
 
 
+@app.post("/api/entries/{entry_id}/save", status_code=200)
+def save_entry(entry_id: str):
+  db = StartsDB()
+  if not db.save_entry(entry_id):
+    raise HTTPException(status_code=404, detail="見つかりません")
+  return {"saved": entry_id}
+
+
+@app.get("/api/saved")
+def list_saved():
+  db = StartsDB()
+  return db.fetch_saved()
+
+
+@app.delete("/api/saved/{entry_id}")
+def delete_saved(entry_id: str):
+  db = StartsDB()
+  if not db.delete_saved(entry_id):
+    raise HTTPException(status_code=404, detail="見つかりません")
+  return {"deleted": entry_id}
+
+
 @app.get("/sw.js")
 def service_worker():
   return FileResponse("static/sw.js", media_type="text/javascript")

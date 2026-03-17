@@ -128,6 +128,8 @@
     .btn-delete:hover { background: #fdd; }
     .btn-read { background: none; border: 1px solid #ccc; color: #888; font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
     .btn-read:hover { background: #f0f0f0; }
+    .btn-save { background: none; border: 1px solid #5865f2; color: #5865f2; font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
+    .btn-save:hover { background: #eef0fd; }
     .btn-notify { background: #f0f0f0; color: #444; }
     .btn-notify:hover { background: #e0e0e0; }
     .btn-notify.active { background: #5865f2; color: #fff; }
@@ -169,6 +171,7 @@
     <h1>starts</h1>
     <nav class="tabs">
       <div class="tab active" onclick="switchTab('entries')">新着</div>
+      <div class="tab" onclick="switchTab('saved')">後で読む</div>
       <div class="tab" onclick="switchTab('sources')">フィード管理</div>
     </nav>
     <button id="notifyBtn" class="btn-notify" onclick="toggleNotification()" style="margin-left:auto">通知OFF</button>
@@ -178,6 +181,11 @@
     <!-- 新着一覧 -->
     <div id="page-entries" class="page active">
       <div id="entryList" class="entry-list"></div>
+    </div>
+
+    <!-- 後で読む -->
+    <div id="page-saved" class="page">
+      <div id="savedList" class="entry-list"></div>
     </div>
 
     <!-- フィード管理 -->
@@ -202,12 +210,19 @@
 
     function switchTab(name) {
       document.querySelectorAll(".tab").forEach((t, i) => {
-        t.classList.toggle("active", ["entries", "sources"][i] === name);
+        t.classList.toggle("active", ["entries", "saved", "sources"][i] === name);
       });
       document.querySelectorAll(".page").forEach(p => {
         p.classList.toggle("active", p.id === `page-${name}`);
       });
+      location.hash = name;
+      if (name === "entries") loadEntries();
+      if (name === "saved") loadSaved();
+      if (name === "sources") loadSources();
     }
+
+    const initialTab = location.hash.replace("#", "") || "entries";
+    switchTab(["entries", "saved", "sources"].includes(initialTab) ? initialTab : "entries");
 
     async function loadEntries() {
       const res = await fetch(api("/api/entries"));
@@ -237,6 +252,7 @@
           <div class="entry-meta">
             <span>${g.key}</span>
             <span>${e.created_at}</span>
+            <button class="btn-save" onclick="saveEntry('${e.id}')">後で読む</button>
             <button class="btn-read" onclick="markRead('${e.id}')">既読</button>
           </div>
           <div class="entry-title"><a href="${e.link}" target="_blank" rel="noopener">${e.title ?? "(タイトルなし)"}</a></div>
@@ -307,6 +323,40 @@
       document.getElementById(`entry-${id}`).remove();
     }
 
+    async function saveEntry(id) {
+      await fetch(api(`/api/entries/${id}/save`), { method: "POST" });
+      document.getElementById(`entry-${id}`).remove();
+    }
+
+    async function loadSaved() {
+      const res = await fetch(api("/api/saved"));
+      const entries = await res.json();
+      const el = document.getElementById("savedList");
+
+      if (entries.length === 0) {
+        el.innerHTML = '<div class="empty">後で読む記事はありません</div>';
+        return;
+      }
+
+      el.innerHTML = entries.map(e => {
+        const key = e.source_name ?? e.domain;
+        return `
+        <div class="entry-card zebra-even" id="saved-${e.id}">
+          <div class="entry-meta">
+            <span>${key}</span>
+            <span>${e.created_at}</span>
+            <button class="btn-read" onclick="deleteSaved('${e.id}')">削除</button>
+          </div>
+          <div class="entry-title"><a href="${e.link}" target="_blank" rel="noopener">${e.title ?? "(タイトルなし)"}</a></div>
+        </div>`;
+      }).join("");
+    }
+
+    async function deleteSaved(id) {
+      await fetch(api(`/api/saved/${id}`), { method: "DELETE" });
+      document.getElementById(`saved-${id}`).remove();
+    }
+
     // --- push通知 ---
     let swRegistration = null;
 
@@ -363,10 +413,6 @@
       const rawData = atob(base64);
       return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
     }
-
-    loadEntries();
-    loadSources();
-    initNotification();
   </script>
 </body>
 </html>
