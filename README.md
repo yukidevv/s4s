@@ -73,6 +73,37 @@ python main.py run  # 新着を取得してDBに記録
 
 フィードの追加・削除は Web UI から行います。
 
+## Push通知
+
+ヘッダーの「通知」ボタンから購読できます。通知は `main.py run` 実行のたびに送信されます。
+
+VAPID鍵の生成：
+
+```bash
+python -c "from py_vapid import Vapid; v = Vapid(); v.generate_keys(); print('PRIVATE:', v.private_pem().decode()); print('PUBLIC:', v.public_key.public_bytes(__import__('cryptography.hazmat.primitives.serialization', fromlist=['Encoding','PublicFormat']).Encoding.X962, __import__('cryptography.hazmat.primitives.serialization', fromlist=['Encoding','PublicFormat']).PublicFormat.UncompressedPoint).hex())"
+# または py_vapid CLI: vapid --gen
+```
+
+環境変数に設定：
+
+```bash
+VAPID_PRIVATE_KEY=<秘密鍵>
+VAPID_PUBLIC_KEY=<公開鍵(URL-safe Base64)>
+VAPID_EMAIL=<your@email.com>
+```
+
+`docker-compose.override.yml` に追記する場合：
+
+```yaml
+services:
+  app:
+    environment:
+      - STARTS_TOKEN=<token>
+      - VAPID_PRIVATE_KEY=<秘密鍵>
+      - VAPID_PUBLIC_KEY=<公開鍵>
+      - VAPID_EMAIL=<your@email.com>
+```
+
 ## サーバーへのデプロイ (systemd)
 
 ```bash
