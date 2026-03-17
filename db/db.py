@@ -32,6 +32,10 @@ class StartsDB:
           created_at TIMESTAMP DEFAULT (datetime('now', '+9 hours'))
         )
       """)
+      try:
+        self.conn.execute("ALTER TABLE feeds ADD COLUMN saved INTEGER NOT NULL DEFAULT 0")
+      except Exception:
+        pass
       self.conn.commit()
 
   def register_feed(self, title, link, domain, source_name):
@@ -45,12 +49,28 @@ class StartsDB:
 
   def fetch_entries(self):
     res = self.conn.execute(
-      "SELECT url_2_hash, title, link, source_name, domain, created_at FROM feeds WHERE read = 0 ORDER BY created_at DESC"
+      "SELECT url_2_hash, title, link, source_name, domain, created_at FROM feeds WHERE read = 0 AND saved = 0 ORDER BY created_at DESC"
     ).fetchall()
     return [{"id": r[0], "title": r[1], "link": r[2], "source_name": r[3], "domain": r[4], "created_at": r[5]} for r in res]
 
   def delete_entry(self, url_2_hash: str) -> bool:
     cur = self.conn.execute("UPDATE feeds SET read = 1 WHERE url_2_hash = ?", (url_2_hash,))
+    self.conn.commit()
+    return cur.rowcount > 0
+
+  def save_entry(self, url_2_hash: str) -> bool:
+    cur = self.conn.execute("UPDATE feeds SET saved = 1 WHERE url_2_hash = ?", (url_2_hash,))
+    self.conn.commit()
+    return cur.rowcount > 0
+
+  def fetch_saved(self):
+    res = self.conn.execute(
+      "SELECT url_2_hash, title, link, source_name, domain, created_at FROM feeds WHERE saved = 1 ORDER BY created_at DESC"
+    ).fetchall()
+    return [{"id": r[0], "title": r[1], "link": r[2], "source_name": r[3], "domain": r[4], "created_at": r[5]} for r in res]
+
+  def delete_saved(self, url_2_hash: str) -> bool:
+    cur = self.conn.execute("UPDATE feeds SET saved = 0, read = 1 WHERE url_2_hash = ?", (url_2_hash,))
     self.conn.commit()
     return cur.rowcount > 0
 
