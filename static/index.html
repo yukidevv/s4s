@@ -223,6 +223,7 @@
 
     const initialTab = location.hash.replace("#", "") || "entries";
     switchTab(["entries", "saved", "sources"].includes(initialTab) ? initialTab : "entries");
+    initNotification();
 
     async function loadEntries() {
       const res = await fetch(api("/api/entries"));
