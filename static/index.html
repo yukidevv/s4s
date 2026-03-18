@@ -207,6 +207,8 @@
     const TOKEN = new URLSearchParams(location.search).get("token") ?? "";
     const BASE = location.pathname.replace(/\/$/, "");
     const api = (path) => `${BASE}${path}?token=${encodeURIComponent(TOKEN)}`;
+    let swRegistration = null;
+    let vapidPublicKey = null;
 
     function switchTab(name) {
       document.querySelectorAll(".tab").forEach((t, i) => {
@@ -359,8 +361,6 @@
     }
 
     // --- push通知 ---
-    let swRegistration = null;
-    let vapidPublicKey = null;
 
     async function initNotification() {
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
