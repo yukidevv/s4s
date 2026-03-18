@@ -389,8 +389,12 @@
     }
 
     async function toggleNotification() {
-      if (!swRegistration) return;
-      const existing = await swRegistration.pushManager.getSubscription();
+      if (!swRegistration) { alert("swRegistration null"); return; }
+      let existing;
+      try {
+        existing = await swRegistration.pushManager.getSubscription();
+      } catch(e) { alert("getSubscription失敗: " + e.message); return; }
+      alert("existing: " + (existing ? existing.endpoint.slice(0,40) : "null") + " / vapidKey: " + (vapidPublicKey ? "OK" : "null"));
       if (existing) {
         await fetch(api("/api/push/subscribe"), {
           method: "DELETE",
