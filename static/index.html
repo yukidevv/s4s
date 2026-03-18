@@ -359,10 +359,16 @@
 
     // --- push通知 ---
     let swRegistration = null;
+    let vapidPublicKey = null;
 
     async function initNotification() {
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
       swRegistration = await navigator.serviceWorker.register("sw.js");
+      const res = await fetch(api("/api/vapid-public-key"));
+      if (res.ok) {
+        const data = await res.json();
+        vapidPublicKey = data.publicKey;
+      }
       updateNotifyBtn();
     }
 
@@ -385,14 +391,12 @@
         });
         await existing.unsubscribe();
       } else {
-        const res = await fetch(api("/api/vapid-public-key"));
-        if (!res.ok) { alert("VAPID keys が設定されていません"); return; }
-        const { publicKey } = await res.json();
+        if (!vapidPublicKey) { alert("VAPID keys が設定されていません"); return; }
         const perm = await Notification.requestPermission();
         if (perm !== "granted") return;
         const sub = await swRegistration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
         });
         await fetch(api("/api/push/subscribe"), {
           method: "POST",
