@@ -362,8 +362,16 @@
     let vapidPublicKey = null;
 
     async function initNotification() {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-      swRegistration = await navigator.serviceWorker.register("sw.js");
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        alert("このブラウザはWeb Push非対応です");
+        return;
+      }
+      try {
+        swRegistration = await navigator.serviceWorker.register("sw.js");
+      } catch (e) {
+        alert("SW登録失敗: " + e.message);
+        return;
+      }
       const res = await fetch(api("/api/vapid-public-key"));
       if (res.ok) {
         const data = await res.json();
