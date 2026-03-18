@@ -113,8 +113,8 @@ cd /srv/www/htdocs/starts
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-sudo cp systemd/starts.service /etc/systemd/system/
-sudo cp systemd/starts.timer  /etc/systemd/system/
+sudo systemctl link $(pwd)/systemd/starts.service
+sudo systemctl link $(pwd)/systemd/starts.timer
 sudo systemctl daemon-reload
 sudo systemctl enable --now starts.timer
 ```

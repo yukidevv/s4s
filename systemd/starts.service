@@ -5,6 +5,6 @@ After=network.target
 [Service]
 Type=oneshot
 WorkingDirectory=/srv/www/htdocs/starts
-ExecStart=/srv/www/htdocs/starts/.venv/bin/python main.py run
+ExecStart=docker compose exec -T app python main.py run
 StandardOutput=journal
 StandardError=journal
