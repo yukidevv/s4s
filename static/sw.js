@@ -11,10 +11,5 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(
-    self.clients.matchAll({ type: "window" }).then(clients => {
-      if (clients.length > 0) return clients[0].focus();
-      return self.clients.openWindow(self.location.pathname.replace("/sw.js", "/"));
-    })
-  );
+  event.waitUntil(self.clients.openWindow("/"));
 });

@@ -363,10 +363,14 @@
     // --- push通知 ---
 
     async function initNotification() {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        alert("このブラウザはWeb Push非対応です");
+        return;
+      }
       try {
         swRegistration = await navigator.serviceWorker.register("sw.js");
       } catch (e) {
+        alert("SW登録失敗: " + e.message);
         return;
       }
       const res = await fetch(api("/api/vapid-public-key"));
@@ -386,8 +390,12 @@
     }
 
     async function toggleNotification() {
-      if (!swRegistration) return;
-      const existing = await swRegistration.pushManager.getSubscription();
+      if (!swRegistration) { alert("swRegistration null"); return; }
+      let existing;
+      try {
+        existing = await swRegistration.pushManager.getSubscription();
+      } catch(e) { alert("getSubscription失敗: " + e.message); return; }
+      alert("existing: " + (existing ? existing.endpoint.slice(0,40) : "null") + " / vapidKey: " + (vapidPublicKey ? "OK" : "null"));
       if (existing) {
         await fetch(api("/api/push/subscribe"), {
           method: "DELETE",
