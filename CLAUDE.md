@@ -64,22 +64,22 @@ CREATE TABLE sources (
 ## サーバへのデプロイ (systemd)
 
 ```bash
-# アプリを /srv/www/htdocs/starts に配置し仮想環境を作成
-git clone <repo> /srv/www/htdocs/starts
-cd /srv/www/htdocs/starts
+# アプリを /srv/www/htdocs/s4s に配置し仮想環境を作成
+git clone <repo> /srv/www/htdocs/s4s
+cd /srv/www/htdocs/s4s
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
 # systemd ユニットをインストール
-sudo systemctl link $(pwd)/systemd/starts.service
-sudo systemctl link $(pwd)/systemd/starts.timer
+sudo systemctl link $(pwd)/systemd/s4s.service
+sudo systemctl link $(pwd)/systemd/s4s.timer
 sudo systemctl daemon-reload
-sudo systemctl enable --now starts.timer
+sudo systemctl enable --now s4s.timer
 
 # 確認
-sudo systemctl status starts.timer
-sudo systemctl list-timers starts.timer
-journalctl -u starts.service
+sudo systemctl status s4s.timer
+sudo systemctl list-timers s4s.timer
+journalctl -u s4s.service
 ```
 
 ## 環境

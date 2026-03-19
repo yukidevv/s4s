@@ -1,4 +1,4 @@
-# starts (Strategic Tracking & RSS System)
+# s4s (Strategic Tracking & RSS System)
 
 自分専用RSSリーダー。登録したフィードの新着記事をWeb UIで閲覧できます。
 
@@ -51,7 +51,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 アクセスURL：
 ```
-https://example.com/starts/?token=<token>
+https://example.com/s4s/?token=<token>
 ```
 
 このURLをスマホにブックマークしてください。トークンなしのアクセスは403になります。
@@ -108,22 +108,22 @@ services:
 ## サーバーへのデプロイ (systemd)
 
 ```bash
-git clone <repo> /srv/www/htdocs/starts
-cd /srv/www/htdocs/starts
+git clone <repo> /srv/www/htdocs/s4s
+cd /srv/www/htdocs/s4s
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-sudo systemctl link $(pwd)/systemd/starts.service
-sudo systemctl link $(pwd)/systemd/starts.timer
+sudo systemctl link $(pwd)/systemd/s4s.service
+sudo systemctl link $(pwd)/systemd/s4s.timer
 sudo systemctl daemon-reload
-sudo systemctl enable --now starts.timer
+sudo systemctl enable --now s4s.timer
 ```
 
 07:00 / 12:00 / 17:00 (JST) に自動で新着取得します。
 
 ```bash
-sudo systemctl list-timers starts.timer  # 次回実行時刻の確認
-journalctl -u starts.service             # ログ確認
+sudo systemctl list-timers s4s.timer  # 次回実行時刻の確認
+journalctl -u s4s.service             # ログ確認
 ```
 
 ## DB
