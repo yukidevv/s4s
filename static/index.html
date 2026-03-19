@@ -207,6 +207,8 @@
     const TOKEN = new URLSearchParams(location.search).get("token") ?? "";
     const BASE = location.pathname.replace(/\/$/, "");
     const api = (path) => `${BASE}${path}?token=${encodeURIComponent(TOKEN)}`;
+    let swRegistration = null;
+    let vapidPublicKey = null;
 
     function switchTab(name) {
       document.querySelectorAll(".tab").forEach((t, i) => {
@@ -223,6 +225,7 @@
 
     const initialTab = location.hash.replace("#", "") || "entries";
     switchTab(["entries", "saved", "sources"].includes(initialTab) ? initialTab : "entries");
+    initNotification();
 
     async function loadEntries() {
       const res = await fetch(api("/api/entries"));
@@ -358,11 +361,27 @@
     }
 
     // --- push通知 ---
-    let swRegistration = null;
 
     async function initNotification() {
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-      swRegistration = await navigator.serviceWorker.register("sw.js");
+      try {
+        swRegistration = await navigator.serviceWorker.register("sw.js");
+      } catch (e) {
+        return;
+      }
+      const res = await fetch(api("/api/vapid-public-key"));
+      if (res.ok) {
+        const data = await res.json();
+        vapidPublicKey = data.publicKey;
+      }
+      // SWにページURL（トークン付き）を送信
+      const sendUrl = () => {
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: "SET_URL", url: location.href });
+        }
+      };
+      sendUrl();
+      navigator.serviceWorker.addEventListener("controllerchange", sendUrl);
       updateNotifyBtn();
     }
 
@@ -385,14 +404,12 @@
         });
         await existing.unsubscribe();
       } else {
-        const res = await fetch(api("/api/vapid-public-key"));
-        if (!res.ok) { alert("VAPID keys が設定されていません"); return; }
-        const { publicKey } = await res.json();
+        if (!vapidPublicKey) { alert("VAPID keys が設定されていません"); return; }
         const perm = await Notification.requestPermission();
         if (perm !== "granted") return;
         const sub = await swRegistration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey),
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
         });
         await fetch(api("/api/push/subscribe"), {
           method: "POST",
