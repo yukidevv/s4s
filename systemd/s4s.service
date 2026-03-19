@@ -1,0 +1,10 @@
+[Unit]
+Description=s4s RSS reader - fetch feeds
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/www/htdocs/s4s
+ExecStart=/srv/www/htdocs/s4s/.venv/bin/python main.py run
+StandardOutput=journal
+StandardError=journal

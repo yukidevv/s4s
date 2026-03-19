@@ -1,5 +1,5 @@
 [Unit]
-Description=starts RSS reader - 07:00 / 12:00 / 17:00 (JST)
+Description=s4s RSS reader - 07:00 / 12:00 / 17:00 (JST)
 
 [Timer]
 OnCalendar=*-*-* 07:00:00 Asia/Tokyo
