@@ -71,21 +71,18 @@
       color: #888;
       margin-bottom: .35rem;
       display: flex;
+      flex-direction: column;
+      gap: .3rem;
+    }
+
+    .entry-meta-top {
+      display: flex;
       gap: .75rem;
-      align-items: center;
     }
 
-    .entry-meta .source-name {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .entry-meta .btn-save,
-    .entry-meta .btn-read {
-      flex-shrink: 0;
+    .entry-meta-actions {
+      display: flex;
+      gap: .5rem;
     }
 
     .entry-title {
@@ -267,10 +264,14 @@
         return g.entries.map(e => `
         <div class="entry-card ${zebra}" id="entry-${e.id}">
           <div class="entry-meta">
-            <span class="source-name">${g.key}</span>
-            <span>${e.created_at}</span>
-            <button class="btn-save" onclick="saveEntry('${e.id}')">後で読む</button>
-            <button class="btn-read" onclick="markRead('${e.id}')">既読</button>
+            <div class="entry-meta-top">
+              <span>${g.key}</span>
+              <span>${e.created_at}</span>
+            </div>
+            <div class="entry-meta-actions">
+              <button class="btn-save" onclick="saveEntry('${e.id}')">後で読む</button>
+              <button class="btn-read" onclick="markRead('${e.id}')">既読</button>
+            </div>
           </div>
           <div class="entry-title"><a href="${e.link}" target="_blank" rel="noopener">${e.title ?? "(タイトルなし)"}</a></div>
         </div>`);
@@ -360,9 +361,13 @@
         return `
         <div class="entry-card zebra-even" id="saved-${e.id}">
           <div class="entry-meta">
-            <span class="source-name">${key}</span>
-            <span>${e.created_at}</span>
-            <button class="btn-read" onclick="deleteSaved('${e.id}')">削除</button>
+            <div class="entry-meta-top">
+              <span>${key}</span>
+              <span>${e.created_at}</span>
+            </div>
+            <div class="entry-meta-actions">
+              <button class="btn-read" onclick="deleteSaved('${e.id}')">削除</button>
+            </div>
           </div>
           <div class="entry-title"><a href="${e.link}" target="_blank" rel="noopener">${e.title ?? "(タイトルなし)"}</a></div>
         </div>`;
