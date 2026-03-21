@@ -171,10 +171,10 @@
     <h1>s4s</h1>
     <nav class="tabs">
       <div class="tab active" onclick="switchTab('entries')">新着</div>
-      <div class="tab" onclick="switchTab('saved')">後で読む</div>
-      <div class="tab" onclick="switchTab('sources')">フィード管理</div>
+      <div class="tab" onclick="switchTab('saved')">キュー</div>
+      <div class="tab" onclick="switchTab('sources')">フィード</div>
     </nav>
-    <button id="notifyBtn" class="btn-notify" onclick="toggleNotification()" style="margin-left:auto">通知OFF</button>
+    <button id="notifyBtn" class="btn-notify" onclick="toggleNotification()" style="margin-left:auto">🔕</button>
   </header>
 
   <main>
@@ -390,7 +390,7 @@
       const sub = await swRegistration.pushManager.getSubscription();
       const btn = document.getElementById("notifyBtn");
       btn.classList.toggle("active", !!sub);
-      btn.textContent = sub ? "通知ON" : "通知OFF";
+      btn.textContent = sub ? "🔔" : "🔕";
     }
 
     async function toggleNotification() {
