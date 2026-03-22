@@ -338,7 +338,7 @@
 
     async function markRead(id) {
       await fetch(api(`/api/entries/${id}`), { method: "DELETE" });
-      document.getElementById(`entry-${id}`).remove();
+      await loadEntries();
     }
 
     async function saveEntry(id) {
