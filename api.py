@@ -16,7 +16,7 @@ app = FastAPI()
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
   expected = os.environ.get("STARTS_TOKEN", "")
-  if expected and request.url.path not in ("/sw.js",) and request.query_params.get("token") != expected:
+  if expected and request.url.path not in ("/sw.js", "/manifest.json", "/icon.svg") and request.query_params.get("token") != expected:
     return Response("Forbidden", status_code=403)
   return await call_next(request)
 

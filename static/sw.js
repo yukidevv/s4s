@@ -32,7 +32,7 @@ self.addEventListener("push", (event) => {
   } catch (e) {}
 
   event.waitUntil(
-    self.registration.showNotification(data.title, { body: data.body })
+    self.registration.showNotification(data.title, { body: data.body, icon: "/icon.svg" })
   );
 });
 
