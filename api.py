@@ -105,8 +105,8 @@ def delete_saved(entry_id: str):
 
 
 @app.get("/manifest.json")
-def get_manifest(token: str = Query("")):
-  start_url = f"/?token={token}" if token else "/"
+def get_manifest(token: str = Query(""), base: str = Query("")):
+  start_url = f"{base}/?token={token}" if token else f"{base}/"
   return JSONResponse({
     "name": "s4s",
     "short_name": "s4s",
