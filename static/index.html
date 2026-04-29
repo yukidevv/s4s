@@ -219,6 +219,7 @@
 
   <script>
     const TOKEN = new URLSearchParams(location.search).get("token") ?? "";
+    document.querySelector('link[rel="manifest"]').href = `manifest.json?token=${encodeURIComponent(TOKEN)}`;
     const BASE = location.pathname.replace(/\/$/, "");
     const api = (path) => `${BASE}${path}?token=${encodeURIComponent(TOKEN)}`;
     let swRegistration = null;

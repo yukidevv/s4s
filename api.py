@@ -5,7 +5,7 @@ import hashlib
 import feedparser
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel
 from util.url import get_domain
 from util.feed import discover_feed
@@ -102,6 +102,21 @@ def delete_saved(entry_id: str):
   if not db.delete_saved(entry_id):
     raise HTTPException(status_code=404, detail="見つかりません")
   return {"deleted": entry_id}
+
+
+@app.get("/manifest.json")
+def get_manifest(token: str = Query("")):
+  start_url = f"/?token={token}" if token else "/"
+  return JSONResponse({
+    "name": "s4s",
+    "short_name": "s4s",
+    "description": "RSSリーダー",
+    "start_url": start_url,
+    "display": "standalone",
+    "background_color": "#f5f5f5",
+    "theme_color": "#5865f2",
+    "icons": [{"src": "icon.png", "sizes": "any", "type": "image/png", "purpose": "any maskable"}]
+  })
 
 
 @app.get("/sw.js")
