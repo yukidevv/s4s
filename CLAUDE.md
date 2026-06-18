@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 応答言語
+
+- ユーザーへの応答は必ず日本語で行うこと。
+
 ## 実行方法
 
 ```bash
@@ -70,6 +74,15 @@ CREATE TABLE push_subscriptions (
 )
 ```
 
+## 実装上の注意（非自明な挙動）
+
+- **重複検知の前提**: `cmd_run()` / `add_source()` はフィードを先頭から走査し、既知ハッシュに当たった時点で `break` する。フィードのエントリが新着順に並んでいることを前提としており、既知エントリより後ろにある未取得エントリは取りこぼす。
+- **「削除」はソフト削除**: `DELETE /api/entries/{id}` は実際にはレコードを消さず `read=1` を立てるだけ（＝既読化）。同様に `DELETE /api/saved/{id}` は `saved=0, read=1`。物理削除されるのはフィード購読解除時のみ。
+- **フィード購読解除はカスケード**: `delete_source()` は同一 `domain` の `feeds` レコードを全削除する。URL ではなく domain でひも付くため、同一ドメインの別フィードを登録していると巻き添えで消える。
+- **認証**: `STARTS_TOKEN` 設定時、クエリパラメータ `?token=` が一致しないと 403。例外パスは `/sw.js` `/manifest.json` `/icon.png`（PWA がトークンなしで取得する必要があるため）。未設定時は全リクエスト拒否。
+- **テスト**: 専用フレームワークなし。`util/url.py` は `python util/url.py` で実行するとインラインの assert が走る。
+- **コード規約**: Python はインデント2スペース（PEP8 の4スペースではない）。既存ファイルに合わせること。
+
 ## サーバへのデプロイ (systemd + Docker)
 
 ```bash
@@ -104,3 +117,4 @@ journalctl -u s4s.service
   docker compose up -d --build
   # アクセス: http://localhost:8000/?token=<token>
   ```
+- ローカル開発では `docker-compose.override.yml`（gitignore済み）で `STARTS_TOKEN` と VAPID 鍵を上書きできる。秘密情報を含むためコミットしないこと。
