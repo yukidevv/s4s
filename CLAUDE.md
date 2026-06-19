@@ -96,6 +96,8 @@ CREATE TABLE push_subscriptions (
 
 **気づきの報告**: CLAUDE.md / メモリに残すべき規約・前提・落とし穴に気づいたら、作業を止めずに進め、**完了後にまとめて提案・報告する**（ループの途中で止めない）。
 
+**実装はサブエージェントに委譲**: 実装作業はメインで直接編集せず developer サブエージェントに任せる。サブエージェントの編集が承認プロンプトで止まらないよう、`.claude/settings.local.json` の `permissions.allow` に `Edit(./**)` / `Write(./**)` を許可済み（プロジェクト配下にスコープ。`Edit`/`Write` の bare 許可はリポジトリ外まで書けてしまうためセキュリティ上避ける）。
+
 ## サーバへのデプロイ (systemd + Docker)
 
 ```bash
