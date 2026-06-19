@@ -182,7 +182,7 @@
 </head>
 <body>
   <header>
-    <h1>s4s</h1>
+    <h1 onclick="refresh()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();refresh();}" role="button" tabindex="0" aria-label="一覧を最新化" style="cursor:pointer" title="クリックで最新化">s4s</h1>
     <nav class="tabs">
       <div class="tab active" onclick="switchTab('entries')">新着</div>
       <div class="tab" onclick="switchTab('saved')">キュー</div>
@@ -236,6 +236,11 @@
       if (name === "entries") loadEntries();
       if (name === "saved") loadSaved();
       if (name === "sources") loadSources();
+    }
+
+    function refresh() {
+      const active = document.querySelector(".page.active");
+      if (active) switchTab(active.id.replace("page-", ""));
     }
 
     const initialTab = location.hash.replace("#", "") || "entries";
