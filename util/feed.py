@@ -32,3 +32,22 @@ def discover_feed(url: str) -> dict:
         return {"url": feed_url, "name": d.feed.get("title", "")}
 
   raise ValueError("フィードが見つかりませんでした")
+
+
+def fetch_page_title(url: str) -> str:
+  """
+  URLのページを取得し <title> を返す。
+  取得失敗・例外・空文字の場合はフォールバックとして URL 自体を返す
+  （例外は送出しない）。
+  """
+  try:
+    resp = requests.get(url, timeout=10, headers={"User-Agent": "starts/1.0"})
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+    if soup.title and soup.title.string:
+      title = soup.title.string.strip()
+      if title:
+        return title
+  except Exception:
+    pass
+  return url

@@ -199,6 +199,13 @@
 
     <!-- 後で読む -->
     <div id="page-saved" class="page">
+      <div class="card">
+        <div class="add-form">
+          <input id="savedUrlInput" type="url" placeholder="https://example.com" />
+          <button class="btn-add" onclick="addSaved()">追加</button>
+        </div>
+        <div id="savedAddError" class="error"></div>
+      </div>
       <div id="savedList" class="entry-list"></div>
     </div>
 
@@ -394,6 +401,33 @@
         </div>`;
       }).join("");
     }
+
+    async function addSaved() {
+      const input = document.getElementById("savedUrlInput");
+      const errEl = document.getElementById("savedAddError");
+      errEl.textContent = "";
+
+      const url = input.value.trim();
+      if (!url) return;
+      const res = await fetch(api("/api/saved"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        errEl.textContent = data.detail ?? "エラーが発生しました";
+        return;
+      }
+
+      input.value = "";
+      await loadSaved();
+    }
+
+    document.getElementById("savedUrlInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") addSaved();
+    });
 
     async function deleteSaved(id) {
       await fetch(api(`/api/saved/${id}`), { method: "DELETE" });
