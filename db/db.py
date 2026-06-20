@@ -3,10 +3,11 @@ import os
 import hashlib
 
 class StartsDB:
-  def __init__(self):
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    DB_PATH = os.path.join(base_dir, "..", "data", "stars.db")
-    self.db_path = DB_PATH
+  def __init__(self, db_path=None):
+    if db_path is None:
+      base_dir = os.path.dirname(os.path.abspath(__file__))
+      db_path = os.path.join(base_dir, "..", "data", "stars.db")
+    self.db_path = db_path
     self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
     self._init_db()
 
