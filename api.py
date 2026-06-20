@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel
 from util.url import get_domain
-from util.feed import discover_feed
+from util.feed import discover_feed, fetch_page_title
 from db.db import StartsDB
 
 app = FastAPI()
@@ -21,6 +21,9 @@ async def auth_middleware(request: Request, call_next):
   return await call_next(request)
 
 class SourceRequest(BaseModel):
+  url: str
+
+class SavedRequest(BaseModel):
   url: str
 
 class PushSubscriptionRequest(BaseModel):
@@ -94,6 +97,17 @@ def save_entry(entry_id: str):
 def list_saved():
   db = StartsDB()
   return db.fetch_saved()
+
+
+@app.post("/api/saved", status_code=201)
+def add_saved(body: SavedRequest):
+  db = StartsDB()
+  domain = get_domain(body.url)
+  if not domain:
+    raise HTTPException(status_code=400, detail="無効なURLです")
+  title = fetch_page_title(body.url)
+  db.add_saved_link(title, body.url, domain, domain)
+  return {"link": body.url, "title": title, "domain": domain}
 
 
 @app.delete("/api/saved/{entry_id}")
