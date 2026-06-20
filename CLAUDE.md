@@ -87,7 +87,7 @@ CREATE TABLE push_subscriptions (
 
 `.claude/agents/` に2つのサブエージェント定義がある。実装作業はこのフローで進める。
 
-- `developer.md` — 実装担当。着手前に**日本語で設計方針を提示して合意**を取り、その後 **GitHub issue を作成**（`gh issue create`）し、**作業ブランチを切って**（`main` では作業しない。`feature/<概要>` または `fix/<概要>`、可能なら issue 番号を含める）実装する。
+- `developer.md` — 実装担当。着手前に**日本語で設計方針を提示して合意**を取り、その後 **GitHub issue を作成**（`gh issue create`）し、**作業ブランチを切って**（`main` では作業しない。`feature/<概要>` または `fix/<概要>`、可能なら issue 番号を含める）実装する。**ブランチは必ず最新の `main` を起点に切る**（例: `git switch -c feature/42-tag-filter main`）。他の feature/fix ブランチの上に重ねて切らない（差分が混ざりレビュー・マージが煩雑になるため）。
 - `reviewer.md` — レビュー担当。自分では修正せず、重要度・`file:line`・理由・修正方針を添えて日本語で指摘する。
 
 標準フロー: 設計方針提示 → **合意（唯一の確認ポイント）** → issue 作成 → ブランチ作成 → 実装 → reviewer レビュー（2〜3往復で収束）→ コミット → push → **PR 作成まで自動**。
