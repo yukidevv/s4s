@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import feedparser
-import hashlib
 import argparse
 import json
 import os
@@ -57,7 +56,7 @@ def cmd_run(db, args):
   for source in sources:
     d = feedparser.parse(source["url"])
     for entry in d.entries:
-      content_hash = hashlib.md5(entry.link.encode()).hexdigest()
+      content_hash = db._hash(entry.link)
       if content_hash in existing_hashes:
         break
       db.register_feed(entry.title, entry.link, source["domain"], source["name"])
