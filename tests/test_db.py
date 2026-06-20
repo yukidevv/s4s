@@ -1,10 +1,11 @@
 """StartsDB の DB 操作に関するテスト。"""
 
-import hashlib
+from db.db import StartsDB
 
 
 def _hash(link):
-  return hashlib.md5(link.encode()).hexdigest()
+  # 本体のハッシュ方式に追従させるため StartsDB._hash に委譲する
+  return StartsDB._hash(link)
 
 
 # --- add_saved_link の UPSERT セマンティクス ---

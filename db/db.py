@@ -49,13 +49,17 @@ class StartsDB:
         pass
       self.conn.commit()
 
+  @staticmethod
+  def _hash(link):
+    return hashlib.md5(link.encode()).hexdigest()
+
   def register_feed(self, title, link, domain, source_name):
-    content_hash = __import__("hashlib").md5(link.encode()).hexdigest()
+    content_hash = self._hash(link)
     self.conn.execute("INSERT INTO feeds (url_2_hash, title, link, domain, source_name) VALUES (?, ?, ?, ?, ?)", (content_hash, title, link, domain, source_name))
     self.conn.commit()
 
   def add_saved_link(self, title, link, domain, source_name):
-    content_hash = hashlib.md5(link.encode()).hexdigest()
+    content_hash = self._hash(link)
     self.conn.execute(
       "INSERT INTO feeds (url_2_hash, title, link, domain, source_name, read, saved) VALUES (?, ?, ?, ?, ?, 0, 1) ON CONFLICT(url_2_hash) DO UPDATE SET saved = 1, read = 0",
       (content_hash, title, link, domain, source_name)
