@@ -1,5 +1,6 @@
 [Unit]
 Description=s4s RSS reader - fetch feeds
+OnFailure=failure-notification@%n.service
 After=network.target
 
 [Service]
