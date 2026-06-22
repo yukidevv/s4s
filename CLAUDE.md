@@ -102,9 +102,9 @@ CREATE TABLE push_subscriptions (
 ## サーバへのデプロイ (systemd + Docker)
 
 ```bash
-# アプリを /srv/www/htdocs/s4s に配置
-git clone <repo> /srv/www/htdocs/s4s
-cd /srv/www/htdocs/s4s
+# アプリを /srv/docker/s4s に配置
+git clone <repo> /srv/docker/s4s
+cd /srv/docker/s4s
 
 # Dockerコンテナを起動（Web UIが :8000 で起動）
 docker compose up -d --build

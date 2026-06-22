@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/srv/www/htdocs/s4s
+WorkingDirectory=/srv/docker/s4s
 ExecStart=docker compose exec -T app python main.py run
 StandardOutput=journal
 StandardError=journal

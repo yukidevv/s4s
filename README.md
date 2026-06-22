@@ -108,8 +108,8 @@ services:
 ## サーバーへのデプロイ (systemd)
 
 ```bash
-git clone <repo> /srv/www/htdocs/s4s
-cd /srv/www/htdocs/s4s
+git clone <repo> /srv/docker/s4s
+cd /srv/docker/s4s
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
