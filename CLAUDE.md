@@ -81,7 +81,7 @@ CREATE TABLE push_subscriptions (
 - **「削除」はソフト削除**: `DELETE /api/entries/{id}` は実際にはレコードを消さず `read=1` を立てるだけ（＝既読化）。同様に `DELETE /api/saved/{id}` は `saved=0, read=1`。物理削除されるのはフィード購読解除時のみ。
 - **フィード購読解除はカスケード**: `delete_source()` は同一 `domain` の `feeds` レコードを全削除する。URL ではなく domain でひも付くため、同一ドメインの別フィードを登録していると巻き添えで消える。
 - **認証**: `STARTS_TOKEN` 設定時、クエリパラメータ `?token=` が一致しないと 403。例外パスは `/sw.js` `/manifest.json` `/icon.png`（PWA がトークンなしで取得する必要があるため）。未設定時は全リクエスト拒否。
-- **テスト**: `pytest` を導入済み。`pip install -r requirements-dev.txt` 後に `pytest` で実行する（テストは `tests/` 配下）。`StartsDB(db_path=...)` で一時ファイル DB を渡してテスト間を隔離する（引数なしなら従来どおり `data/stars.db`）。API テストは `STARTS_TOKEN` 未設定で認証 middleware を素通りさせ、`api.StartsDB` を一時 DB ファクトリに、`fetch_page_title` をモックに差し替える。実ネットワークは叩かない（`requests.get` を monkeypatch）。`util/url.py` の `python util/url.py` によるインライン assert も従来どおり残してある。
+- **テスト**: `pytest` を導入済み。`pip install -r requirements-dev.txt` 後に `pytest` で実行する（テストは `tests/` 配下）。`StartsDB(db_path=...)` で一時ファイル DB を渡してテスト間を隔離する（引数なしなら従来どおり `data/stars.db`）。API テストは `STARTS_TOKEN` 未設定で認証 middleware を素通りさせ、`api.StartsDB` を一時 DB ファクトリに、`fetch_page_title` をモックに差し替える。実ネットワークは叩かない（`requests.get` を monkeypatch）。`util/url.py` の `python util/url.py` によるインライン assert も従来どおり残してある。`static/` の HTML/JS（`index.html` `sw.js` 等）は pytest の対象外なので、変更時は PR 本文に手動確認の観点を列挙する。
 - **コード規約**: Python はインデント2スペース（PEP8 の4スペースではない）。既存ファイルに合わせること。
 
 ## 開発ワークフロー（developer / reviewer）
