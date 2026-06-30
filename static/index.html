@@ -139,6 +139,16 @@
 
     .add-form { display: flex; gap: .5rem; }
 
+    .search-box { margin-bottom: .75rem; }
+
+    .search-box input {
+      width: 100%;
+      padding: .5rem .75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
     .add-form input {
       flex: 1;
       min-width: 0;
@@ -231,6 +241,9 @@
             </div>
             <div id="savedAddError" class="error"></div>
           </div>
+          <div class="search-box">
+            <input id="savedSearchInput" type="search" placeholder="タイトルで絞り込み" oninput="renderSaved()" />
+          </div>
           <div id="savedList" class="entry-list"></div>
         </div>
       </div>
@@ -260,6 +273,7 @@
     const api = (path) => `${BASE}${path}?token=${encodeURIComponent(TOKEN)}`;
     let swRegistration = null;
     let vapidPublicKey = null;
+    let savedEntries = [];
 
     // タブの並び順（横位置）。スワイプ切替・active 判定・hash 検証で共用する
     const TABS = ["entries", "saved", "sources"];
@@ -457,11 +471,25 @@
 
     async function loadSaved() {
       const res = await fetch(api("/api/saved"));
-      const entries = await res.json();
+      savedEntries = await res.json();
+      renderSaved();
+    }
+
+    function renderSaved() {
       const el = document.getElementById("savedList");
 
-      if (entries.length === 0) {
+      if (savedEntries.length === 0) {
         el.innerHTML = '<div class="empty">後で読む記事はありません</div>';
+        return;
+      }
+
+      const q = document.getElementById("savedSearchInput").value.trim().toLowerCase();
+      const entries = q
+        ? savedEntries.filter(e => (e.title ?? "").toLowerCase().includes(q))
+        : savedEntries;
+
+      if (entries.length === 0) {
+        el.innerHTML = '<div class="empty">該当する記事はありません</div>';
         return;
       }
 
@@ -512,7 +540,8 @@
 
     async function deleteSaved(id) {
       await fetch(api(`/api/saved/${id}`), { method: "DELETE" });
-      document.getElementById(`saved-${id}`).remove();
+      savedEntries = savedEntries.filter(e => String(e.id) !== String(id));
+      renderSaved();
     }
 
     // --- push通知 ---
