@@ -139,3 +139,58 @@ def test_delete_source_cascades_by_domain(db):
 
 def test_delete_source_missing_returns_false(db):
   assert db.delete_source("https://notexist.com/feed") is False
+
+
+# --- rename_source ---
+
+def test_rename_source_updates_name_and_feeds(db):
+  """rename_source は sources.name と同一 domain の feeds.source_name を両方更新する。"""
+  db.add_source("https://example.com/feed", "example.com", "旧名")
+  db.register_feed("a", "https://example.com/a", "example.com", "旧名")
+  db.register_feed("b", "https://example.com/b", "example.com", "旧名")
+  db.register_feed("other", "https://other.com/x", "other.com", "Other")
+
+  assert db.rename_source("https://example.com/feed", "新名") is True
+
+  # sources.name が更新される
+  name = db.conn.execute(
+    "SELECT name FROM sources WHERE url = ?", ("https://example.com/feed",)
+  ).fetchone()[0]
+  assert name == "新名"
+
+  # 同一 domain の feeds.source_name も更新される
+  updated = db.conn.execute(
+    "SELECT source_name FROM feeds WHERE domain = ?", ("example.com",)
+  ).fetchall()
+  assert {r[0] for r in updated} == {"新名"}
+
+  # 別 domain の feeds は巻き添えにしない
+  other = db.conn.execute(
+    "SELECT source_name FROM feeds WHERE domain = ?", ("other.com",)
+  ).fetchone()[0]
+  assert other == "Other"
+
+
+def test_rename_source_missing_returns_false(db):
+  assert db.rename_source("https://notexist.com/feed", "新名") is False
+
+
+def test_rename_source_updates_all_feeds_of_same_domain(db):
+  """feeds は domain でひも付くため、同一 domain の別 source の記事も巻き添えで更新される（既知の性質）。"""
+  db.add_source("https://example.com/feed1", "example.com", "ソース1")
+  db.add_source("https://example.com/feed2", "example.com", "ソース2")
+  db.register_feed("a", "https://example.com/a", "example.com", "ソース1")
+  db.register_feed("b", "https://example.com/b", "example.com", "ソース2")
+
+  assert db.rename_source("https://example.com/feed1", "新名") is True
+
+  # 同一 domain の feeds は source を問わず全て新名になる
+  names = db.conn.execute(
+    "SELECT source_name FROM feeds WHERE domain = ?", ("example.com",)
+  ).fetchall()
+  assert {r[0] for r in names} == {"新名"}
+  # sources 側は rename した source のみ更新される
+  n2 = db.conn.execute(
+    "SELECT name FROM sources WHERE url = ?", ("https://example.com/feed2",)
+  ).fetchone()[0]
+  assert n2 == "ソース2"

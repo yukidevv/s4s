@@ -22,6 +22,10 @@ async def auth_middleware(request: Request, call_next):
 class SourceRequest(BaseModel):
   url: str
 
+class SourceRenameRequest(BaseModel):
+  url: str
+  name: str
+
 class SavedRequest(BaseModel):
   url: str
 
@@ -74,6 +78,17 @@ def add_source(body: SourceRequest):
     existing_hashes.add(content_hash)
 
   return {"url": feed["url"], "domain": domain, "name": name}
+
+
+@app.patch("/api/sources")
+def rename_source(body: SourceRenameRequest):
+  db = StartsDB()
+  name = body.name.strip()
+  if not name:
+    raise HTTPException(status_code=400, detail="名前を入力してください")
+  if not db.rename_source(body.url, name):
+    raise HTTPException(status_code=404, detail="見つかりません")
+  return {"url": body.url, "name": name}
 
 
 @app.delete("/api/sources")
