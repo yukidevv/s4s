@@ -105,6 +105,16 @@ class StartsDB:
     res = self.conn.execute("SELECT url, domain, name, created_at FROM sources ORDER BY created_at").fetchall()
     return [{"url": r[0], "domain": r[1], "name": r[2], "created_at": r[3]} for r in res]
 
+  def rename_source(self, url, name):
+    cur = self.conn.execute("UPDATE sources SET name = ? WHERE url = ?", (name, url))
+    if cur.rowcount > 0:
+      self.conn.execute(
+        "UPDATE feeds SET source_name = ? WHERE domain = (SELECT domain FROM sources WHERE url = ?)",
+        (name, url)
+      )
+    self.conn.commit()
+    return cur.rowcount > 0
+
   def delete_source(self, url):
     self.conn.execute("DELETE FROM feeds WHERE domain = (SELECT domain FROM sources WHERE url = ?)", (url,))
     cur = self.conn.execute("DELETE FROM sources WHERE url = ?", (url,))

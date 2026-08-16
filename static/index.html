@@ -171,6 +171,8 @@
     .btn-add:hover { background: #4752c4; }
     .btn-delete { background: #f0f0f0; color: #c00; }
     .btn-delete:hover { background: #fdd; }
+    .btn-rename { background: #f0f0f0; color: #444; }
+    .btn-rename:hover { background: #e0e0e0; }
     .btn-read { background: none; border: 1px solid #ccc; color: #888; font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
     .btn-read:hover { background: #f0f0f0; }
     .btn-save { background: none; border: 1px solid #5865f2; color: #5865f2; font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
@@ -190,6 +192,8 @@
     }
 
     .source-item:last-child { border-bottom: none; }
+
+    .source-actions { display: flex; gap: .5rem; flex-shrink: 0; }
 
     .source-info { min-width: 0; }
     .source-domain { font-weight: 600; font-size: .9rem; }
@@ -389,9 +393,12 @@
       }).join("");
     }
 
+    let sourcesCache = [];
+
     async function loadSources() {
       const res = await fetch(api("/api/sources"));
       const sources = await res.json();
+      sourcesCache = sources;
       const el = document.getElementById("sourceList");
 
       if (sources.length === 0) {
@@ -405,9 +412,32 @@
             <div class="source-domain">${s.name ?? s.domain}</div>
             <div class="source-url">${s.url}</div>
           </div>
-          <button class="btn-delete" onclick="deleteSource('${s.url}')">削除</button>
+          <div class="source-actions">
+            <button class="btn-rename" onclick="renameSource('${s.url}')">名前変更</button>
+            <button class="btn-delete" onclick="deleteSource('${s.url}')">削除</button>
+          </div>
         </div>
       `).join("");
+    }
+
+    async function renameSource(url) {
+      const current = sourcesCache.find(s => s.url === url);
+      const cur = current ? (current.name ?? current.domain) : "";
+      const input = prompt("新しいフィード名", cur);
+      if (input === null) return;
+      const name = input.trim();
+      if (!name) return;
+      const res = await fetch(api("/api/sources"), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, name })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.detail ?? "エラーが発生しました");
+        return;
+      }
+      await Promise.all([loadSources(), loadEntries()]);
     }
 
     async function addSource() {
