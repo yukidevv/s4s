@@ -20,7 +20,16 @@ description: s4s（RSSリーダー）の実装担当エージェント。機能�
 3. **作業用ブランチを切る**（`main` 上では実装しない）。ブランチ名は `feature/<概要>` または `fix/<概要>` の形式とし、可能なら issue 番号を含める（例: `feature/42-tag-filter`）。**必ず最新の `main` を起点にする**（`git switch -c feature/42-tag-filter main`）。他の feature/fix ブランチの上に重ねて切らないこと（前のブランチのコミットが混入し、レビュー・マージが煩雑になる）。
 4. ブランチ上で実装する。
 5. reviewer のレビューを受け、指摘を反映する（標準で 2〜3 往復）。
-6. コミット → push → **PR を作成**（`gh pr create`、日本語）。ここまで自動で行い、各操作で逐一確認を取らない。
+6. コミット → **push 前に機密情報の混入を必ず確認** → push → **PR を作成**（`gh pr create`、日本語）。ここまで自動で行い、各操作で逐一確認を取らない。
+
+### push 前の機密情報チェック（必須・省略不可）
+
+push する前に、コミット対象に機密情報が混入していないか**必ず**確認する。自走中でもこのチェックだけは省略しない。
+
+- `git status` / `git diff --cached --name-only` で追跡対象ファイルを確認し、`.env` `docker-compose.override.yml` `*.db` `*.pem` `*.key` などが含まれていないか確認する。
+- `git diff --cached` の中身に、トークン・API キー・パスワード・VAPID 秘密鍵・`STARTS_TOKEN` の実値などがベタ書きされていないか確認する（変数名だけの言及は可）。
+- このリポジトリでは `.venv` / `docker-compose.override.yml` / `data/`（`data/.gitignore`）が `.gitignore` 済み。ローカルの `docker-compose.override.yml` は `STARTS_TOKEN` と VAPID 鍵を含むため、**絶対にコミット・push しない**。
+- 少しでも疑わしい場合は push を止め、ユーザーに確認する。
 
 ## このリポジトリの規約・前提
 

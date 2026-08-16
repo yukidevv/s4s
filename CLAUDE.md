@@ -96,6 +96,8 @@ CREATE TABLE push_subscriptions (
 
 **自走の原則**: 着手前の設計方針の合意だけ確認を取り、それ以降は途中で操作確認を求めずに最後まで進める（issue 作成・コミット・push・PR 作成も含めて確認不要）。開発ループの途中で逐一ユーザーに確認しないこと。
 
+**push 前の機密情報チェック（必須・省略不可）**: 自走中でも、push する前に機密情報の混入がないかを**必ず**確認する。`git status` / `git diff --cached --name-only` で `.env` `docker-compose.override.yml` `*.db` `*.pem` `*.key` 等が追跡対象に含まれていないか、`git diff --cached` の中身にトークン・API キー・パスワード・VAPID 秘密鍵・`STARTS_TOKEN` の実値がベタ書きされていないか（変数名の言及は可）を確認する。`.venv` / `docker-compose.override.yml` / `data/`（`data/.gitignore`）は `.gitignore` 済み。ローカルの `docker-compose.override.yml` は秘密情報を含むため絶対に push しない。疑わしければ push を止めてユーザーに確認する。
+
 **気づきの報告**: CLAUDE.md / メモリに残すべき規約・前提・落とし穴に気づいたら、作業を止めずに進め、**完了後にまとめて提案・報告する**（ループの途中で止めない）。
 
 **実装はサブエージェントに委譲**: 実装作業はメインで直接編集せず developer サブエージェントに任せる。サブエージェントの編集が承認プロンプトで止まらないよう、`.claude/settings.local.json` の `permissions.allow` に `Edit(./**)` / `Write(./**)` を許可済み（プロジェクト配下にスコープ。`Edit`/`Write` の bare 許可はリポジトリ外まで書けてしまうためセキュリティ上避ける）。
