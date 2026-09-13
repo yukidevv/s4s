@@ -82,6 +82,8 @@ CREATE TABLE push_subscriptions (
 - **フィード購読解除はカスケード**: `delete_source()` は同一 `domain` の `feeds` レコードを全削除する。URL ではなく domain でひも付くため、同一ドメインの別フィードを登録していると巻き添えで消える。
 - **フィード名変更も domain 単位**: `rename_source()`（`PATCH /api/sources`）は `sources.name` を更新すると同時に、同一 `domain` の `feeds.source_name` も一括更新する（既存記事の表示名にも反映するため）。`delete_source` と同じく domain でひも付くため、同一ドメインに複数 source を登録していると別 source の記事の表示名まで巻き添えで書き換わる。
 - **認証**: `STARTS_TOKEN` 設定時、クエリパラメータ `?token=` が一致しないと 403。例外パスは `/sw.js` `/manifest.json` `/icon.png`（PWA がトークンなしで取得する必要があるため）。未設定時は全リクエスト拒否。
+- **テーマは手動トグルのみ**: `localStorage` の `s4s-theme` は `"light" | "dark"` の2値で、OS の `prefers-color-scheme` には追従しない。`"dark"` 以外（未保存・無効値・旧仕様の `"auto"`）はすべてライトにフォールバックする。この判定は `static/index.html` の `<head>` にあるインラインスクリプト（FOUC 対策）と末尾 script の `storedTheme()` の**2箇所**にあり、片方だけ変えると画面は正常に見えたまま初期描画とボタン表示がズレる。
+- **テーマ色の出どころ**: ダークの色リテラルは `static/index.html` の `--dark-*` に集約されており、配色変更はそこだけ触る（`:root[data-theme="dark"]` は `var()` の張り替えなので色を書き足さない）。ただし**ライトのツールバー色 `#5865f2` だけは3箇所**に存在する — CSS の `--accent`、`<meta name="theme-color">` の `content`、`api.py` の manifest `theme_color`。後ろ2つは CSS を参照できない手書きのフォールバックなので、配色変更時に取り残される。
 - **テスト**: `pytest` を導入済み。`pip install -r requirements-dev.txt` 後に `pytest` で実行する（テストは `tests/` 配下）。`StartsDB(db_path=...)` で一時ファイル DB を渡してテスト間を隔離する（引数なしなら従来どおり `data/stars.db`）。API テストは `STARTS_TOKEN` 未設定で認証 middleware を素通りさせ、`api.StartsDB` を一時 DB ファクトリに、`fetch_page_title` をモックに差し替える。実ネットワークは叩かない（`requests.get` を monkeypatch）。`util/url.py` の `python util/url.py` によるインライン assert も従来どおり残してある。`static/` の HTML/JS（`index.html` `sw.js` 等）は pytest の対象外なので、変更時は PR 本文に手動確認の観点を列挙する。
 - **コード規約**: Python はインデント2スペース（PEP8 の4スペースではない）。既存ファイルに合わせること。
 
