@@ -7,32 +7,30 @@
   <link rel="icon" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="manifest" href="manifest.json">
-  <!-- JS 実行前・JS 失敗時でも OS 設定に沿った色になるよう 2 枚宣言しておく。
-       手動でテーマを選んだ場合は JS が両方を実効色に書き換える。
-       content は CSS の --theme-color（ライト＝--accent / ダーク＝--dark-surface）と同じ値を保つこと -->
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#5865f2">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1f2227">
+  <!-- JS が --theme-color の実効値で上書きする。ここの content は JS 実行前・失敗時の
+       フォールバック。ライトのツールバー色は CSS の --accent・この content・api.py の
+       manifest theme_color の 3 箇所にリテラルであるので、変えるときは 3 つとも揃えること -->
+  <meta name="theme-color" content="#5865f2">
   <script>
-    // FOUC 対策: body 描画前に data-theme を確定させる。
+    // FOUC 対策: body 描画前に data-theme を確定させる（ダーク保存時に一瞬ライトが出るのを防ぐ）。
     // ラベル更新など DOM 依存の処理は末尾の script 側（applyTheme）で行う。
-    // キー名は末尾 script の THEME_KEY と一致させること（片方だけ変えると FOUC 対策だけが無効化される）。
+    // キー名（THEME_KEY）と判定規則（"dark" 以外はライト）は末尾 script の storedTheme() と
+    // 一致させること。片方だけ変えると初期描画とボタン表示がズレる。
     (function () {
       try {
-        var t = localStorage.getItem("s4s-theme");
-        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-      } catch (e) { /* localStorage 不可の環境では OS 追従にフォールバック */ }
+        // "dark" 以外（未保存・無効値・旧仕様の "auto"）はすべてライト扱い
+        if (localStorage.getItem("s4s-theme") === "dark") document.documentElement.dataset.theme = "dark";
+      } catch (e) { /* localStorage 不可の環境ではライトで起動する */ }
     })();
   </script>
   <style>
     /*
-     * テーマトークン。
+     * テーマトークン。OS 設定（prefers-color-scheme）には追従せず、手動指定のみで切り替える。
      * 1) bare :root にダークパレットの実体（--dark-*）と、実効トークンのライト値を定義する。
-     *    どの実効トークンもここに必ず定義があるので、下の 2 つのブロックは上書きに専念できる。
-     * 2) OS がダーク かつ 手動ライト指定なし のとき、実効トークンを --dark-* に張り替える
-     * 3) 手動ダーク指定のとき同じ張り替えをする。2 より後に書くことで OS 設定より優先される
-     *    （どちらのセレクタも特異度は同じ (0,2,0) なので、順序で決まる）
-     * 2 と 3 は張り替えの対応表が重複するが、色そのものは --dark-* の 1 箇所にしかないため、
-     * 配色を変えるときに片方だけ古い値が残る事故は起きない。
+     *    どの実効トークンもここに必ず定義があるので、下のブロックは上書きに専念できる。
+     * 2) <html data-theme="dark"> のとき、実効トークンを --dark-* に張り替える。
+     * 色リテラルは --dark-* とライト値の 1 箇所ずつにしかないので、配色変更時に
+     * 古い値が別の場所に残る事故は起きない。
      */
     :root {
       /* ダークパレット（実体）。配色を変えるときはここだけを触る */
@@ -83,33 +81,6 @@
          ライトは従来の挙動（アクセント色）を踏襲し、ダークはヘッダ背景に合わせる */
       --theme-color: var(--accent);
       color-scheme: var(--scheme);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) {
-        --scheme: dark;
-        --bg: var(--dark-bg);
-        --surface: var(--dark-surface);
-        --text: var(--dark-text);
-        --text-secondary: var(--dark-text-secondary);
-        --text-muted: var(--dark-text-muted);
-        --text-faint: var(--dark-text-faint);
-        --border: var(--dark-border);
-        --border-strong: var(--dark-border-strong);
-        --border-subtle: var(--dark-border-subtle);
-        --accent: var(--dark-accent);
-        --accent-hover: var(--dark-accent-hover);
-        --accent-bg-hover: var(--dark-accent-bg-hover);
-        --on-accent: var(--dark-on-accent);
-        --zebra-odd: var(--dark-zebra-odd);
-        --danger: var(--dark-danger);
-        --danger-bg-hover: var(--dark-danger-bg-hover);
-        --btn-bg: var(--dark-btn-bg);
-        --btn-bg-hover: var(--dark-btn-bg-hover);
-        --btn-fg: var(--dark-btn-fg);
-        --shadow-card: var(--dark-shadow-card);
-        --theme-color: var(--dark-surface);
-      }
     }
 
     :root[data-theme="dark"] {
@@ -373,7 +344,7 @@
       <div class="tab" onclick="switchTab('sources')">フィード</div>
     </nav>
     <div class="header-actions">
-      <button id="themeBtn" class="btn-theme" onclick="toggleTheme()" title="テーマ: 自動（OS追従）" aria-label="テーマ: 自動（OS追従）（クリックで切り替え）">🌓</button>
+      <button id="themeBtn" class="btn-theme" onclick="toggleTheme()" title="テーマ: ライト" aria-label="テーマ: ライト（クリックで切り替え）">☀️</button>
       <button id="notifyBtn" class="btn-notify" onclick="toggleNotification()">🔕</button>
     </div>
   </header>
@@ -472,42 +443,36 @@
     switchTab(TABS.includes(initialTab) ? initialTab : "entries");
     initNotification();
 
-    // --- テーマ切り替え（auto → light → dark → auto） ---
-    // data-theme 自体は <head> のインラインスクリプトで確定済みなので、ここはボタン表示と
-    // theme-color の反映だけを担当する。付随機能が本体を巻き込まないよう、タブ描画と
-    // 通知初期化より後ろに置いている。
+    // --- テーマ切り替え（ライト ⇄ ダーク） ---
+    // OS 設定には追従せず、手動指定のみ。data-theme 自体は <head> のインラインスクリプトで
+    // 確定済みなので、ここはボタン表示と theme-color の反映だけを担当する。
+    // 付随機能が本体を巻き込まないよう、タブ描画と通知初期化より後ろに置いている。
     const THEME_KEY = "s4s-theme"; // <head> のインラインスクリプトと同じキーにすること
-    const THEMES = ["auto", "light", "dark"];
-    const THEME_ICON = { auto: "🌓", light: "☀️", dark: "🌙" };
-    const THEME_LABEL = { auto: "自動（OS追従）", light: "ライト", dark: "ダーク" };
-    const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    // 宣言時の theme-color。auto ではこの値に戻し、media 属性による OS 追従を活かす
-    const themeMetas = [...document.querySelectorAll('meta[name="theme-color"]')]
-      .map(el => ({ el, declared: el.content }));
+    const THEME_ICON = { light: "☀️", dark: "🌙" };
+    const THEME_LABEL = { light: "ライト", dark: "ダーク" };
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
 
+    // "dark" 以外（未保存・無効値・旧仕様の "auto"）はすべてライト扱いにフォールバックする。
+    // この判定規則は <head> のインラインスクリプトにも同じものがあるので、両方を揃えること
     function storedTheme() {
       try {
-        const t = localStorage.getItem(THEME_KEY);
-        return THEMES.includes(t) ? t : "auto";
+        return localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
       } catch (e) {
-        return "auto";
+        return "light";
       }
     }
 
-    // localStorage が使えない環境でも循環できるよう、現在値はメモリでも保持する
+    // localStorage が使えない環境でも切り替えられるよう、現在値はメモリでも保持する
     let currentTheme = storedTheme();
 
     function applyTheme(theme) {
       currentTheme = theme;
-      if (theme === "auto") delete document.documentElement.dataset.theme;
-      else document.documentElement.dataset.theme = theme;
+      if (theme === "dark") document.documentElement.dataset.theme = "dark";
+      else delete document.documentElement.dataset.theme;
 
-      // data-theme 反映後なので --theme-color は実効値に解決される。
-      // 手動指定時は OS 設定と食い違うため、どちらの media が当たっても同じ色になるよう両方に入れる
+      // data-theme 反映後なので --theme-color は実効値に解決される
       const color = getComputedStyle(document.documentElement).getPropertyValue("--theme-color").trim();
-      themeMetas.forEach(({ el, declared }) => {
-        el.content = theme === "auto" ? declared : (color || declared);
-      });
+      if (themeMeta && color) themeMeta.content = color;
 
       const btn = document.getElementById("themeBtn");
       btn.textContent = THEME_ICON[theme];
@@ -516,7 +481,7 @@
     }
 
     function toggleTheme() {
-      const next = THEMES[(THEMES.indexOf(currentTheme) + 1) % THEMES.length];
+      const next = currentTheme === "dark" ? "light" : "dark";
       try {
         localStorage.setItem(THEME_KEY, next);
       } catch (e) { /* 保存できなくても表示の切り替えは行う */ }
@@ -524,16 +489,6 @@
     }
 
     applyTheme(currentTheme);
-    try {
-      // auto のときの OS 設定変更への追従は、CSS の @media と meta の media 属性が担うため
-      // この再適用は現状ほぼ no-op（data-theme は既に無く、meta も既に declared のまま）。
-      // auto のときに DOM 側で反映したいものが増えたときのフックとして残してある。
-      // 不要になったら消してよいが、消すと OS 追従が宣言的な仕組みだけに依存する点に注意。
-      // （MediaQueryList.addEventListener 非対応の古い Safari ではこの登録自体が失敗する）
-      darkQuery.addEventListener("change", () => {
-        if (currentTheme === "auto") applyTheme("auto");
-      });
-    } catch (e) { /* 追従できなくても手動切り替えは動く */ }
 
     // スマホでの横スワイプによるタブ切替（縦スクロールは阻害しない）
     (function setupSwipe() {
