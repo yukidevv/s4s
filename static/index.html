@@ -81,7 +81,7 @@
       --shadow-card: 0 1px 4px rgba(0,0,0,.07);
       /* PWA のツールバー色。JS がこの実効値を <meta name="theme-color"> に反映する。
          ライトは従来の挙動（アクセント色）を踏襲し、ダークはヘッダ背景に合わせる */
-      --theme-color: #5865f2;
+      --theme-color: var(--accent);
       color-scheme: var(--scheme);
     }
 
@@ -525,8 +525,11 @@
 
     applyTheme(currentTheme);
     try {
-      // auto のときだけ OS 設定の変更に追従する
-      // （MediaQueryList.addEventListener 非対応の古い Safari では OS 追従のみ効かない）
+      // auto のときの OS 設定変更への追従は、CSS の @media と meta の media 属性が担うため
+      // この再適用は現状ほぼ no-op（data-theme は既に無く、meta も既に declared のまま）。
+      // auto のときに DOM 側で反映したいものが増えたときのフックとして残してある。
+      // 不要になったら消してよいが、消すと OS 追従が宣言的な仕組みだけに依存する点に注意。
+      // （MediaQueryList.addEventListener 非対応の古い Safari ではこの登録自体が失敗する）
       darkQuery.addEventListener("change", () => {
         if (currentTheme === "auto") applyTheme("auto");
       });
