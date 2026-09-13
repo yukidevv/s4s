@@ -7,19 +7,147 @@
   <link rel="icon" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#5865f2">
+  <!-- JS 実行前・JS 失敗時でも OS 設定に沿った色になるよう 2 枚宣言しておく。
+       手動でテーマを選んだ場合は JS が両方を実効色に書き換える。
+       content は CSS の --theme-color（ライト＝--accent / ダーク＝--dark-surface）と同じ値を保つこと -->
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#5865f2">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1f2227">
+  <script>
+    // FOUC 対策: body 描画前に data-theme を確定させる。
+    // ラベル更新など DOM 依存の処理は末尾の script 側（applyTheme）で行う。
+    // キー名は末尾 script の THEME_KEY と一致させること（片方だけ変えると FOUC 対策だけが無効化される）。
+    (function () {
+      try {
+        var t = localStorage.getItem("s4s-theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) { /* localStorage 不可の環境では OS 追従にフォールバック */ }
+    })();
+  </script>
   <style>
+    /*
+     * テーマトークン。
+     * 1) bare :root にダークパレットの実体（--dark-*）と、実効トークンのライト値を定義する。
+     *    どの実効トークンもここに必ず定義があるので、下の 2 つのブロックは上書きに専念できる。
+     * 2) OS がダーク かつ 手動ライト指定なし のとき、実効トークンを --dark-* に張り替える
+     * 3) 手動ダーク指定のとき同じ張り替えをする。2 より後に書くことで OS 設定より優先される
+     *    （どちらのセレクタも特異度は同じ (0,2,0) なので、順序で決まる）
+     * 2 と 3 は張り替えの対応表が重複するが、色そのものは --dark-* の 1 箇所にしかないため、
+     * 配色を変えるときに片方だけ古い値が残る事故は起きない。
+     */
+    :root {
+      /* ダークパレット（実体）。配色を変えるときはここだけを触る */
+      --dark-bg: #16181c;
+      --dark-surface: #1f2227;
+      --dark-text: #e3e5e8;
+      --dark-text-secondary: #b0b6bc;
+      --dark-text-muted: #9aa0a6;
+      --dark-text-faint: #8d939a;
+      --dark-border: #34373d;
+      --dark-border-strong: #454a52;
+      --dark-border-subtle: #2a2d33;
+      --dark-accent: #8b95f7;
+      --dark-accent-hover: #9ea7f9;
+      --dark-accent-bg-hover: #262c40;
+      --dark-on-accent: #16181c;
+      --dark-zebra-odd: #232a38;
+      --dark-danger: #ff6b6b;
+      --dark-danger-bg-hover: #3b2326;
+      --dark-btn-bg: #2b2f36;
+      --dark-btn-bg-hover: #363b43;
+      --dark-btn-fg: #d2d6da;
+      --dark-shadow-card: 0 1px 4px rgba(0,0,0,.35);
+
+      /* 実効トークン（既定＝ライト） */
+      --scheme: light;
+      --bg: #f5f5f5;
+      --surface: #fff;
+      --text: #222;
+      --text-secondary: #666;
+      --text-muted: #888;
+      --text-faint: #999;
+      --border: #e0e0e0;
+      --border-strong: #ccc;
+      --border-subtle: #f0f0f0;
+      --accent: #5865f2;
+      --accent-hover: #4752c4;
+      --accent-bg-hover: #eef0fd;
+      --on-accent: #fff;
+      --zebra-odd: #e8f0fe;
+      --danger: #c00;
+      --danger-bg-hover: #fdd;
+      --btn-bg: #f0f0f0;
+      --btn-bg-hover: #e0e0e0;
+      --btn-fg: #444;
+      --shadow-card: 0 1px 4px rgba(0,0,0,.07);
+      /* PWA のツールバー色。JS がこの実効値を <meta name="theme-color"> に反映する。
+         ライトは従来の挙動（アクセント色）を踏襲し、ダークはヘッダ背景に合わせる */
+      --theme-color: #5865f2;
+      color-scheme: var(--scheme);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --scheme: dark;
+        --bg: var(--dark-bg);
+        --surface: var(--dark-surface);
+        --text: var(--dark-text);
+        --text-secondary: var(--dark-text-secondary);
+        --text-muted: var(--dark-text-muted);
+        --text-faint: var(--dark-text-faint);
+        --border: var(--dark-border);
+        --border-strong: var(--dark-border-strong);
+        --border-subtle: var(--dark-border-subtle);
+        --accent: var(--dark-accent);
+        --accent-hover: var(--dark-accent-hover);
+        --accent-bg-hover: var(--dark-accent-bg-hover);
+        --on-accent: var(--dark-on-accent);
+        --zebra-odd: var(--dark-zebra-odd);
+        --danger: var(--dark-danger);
+        --danger-bg-hover: var(--dark-danger-bg-hover);
+        --btn-bg: var(--dark-btn-bg);
+        --btn-bg-hover: var(--dark-btn-bg-hover);
+        --btn-fg: var(--dark-btn-fg);
+        --shadow-card: var(--dark-shadow-card);
+        --theme-color: var(--dark-surface);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --scheme: dark;
+      --bg: var(--dark-bg);
+      --surface: var(--dark-surface);
+      --text: var(--dark-text);
+      --text-secondary: var(--dark-text-secondary);
+      --text-muted: var(--dark-text-muted);
+      --text-faint: var(--dark-text-faint);
+      --border: var(--dark-border);
+      --border-strong: var(--dark-border-strong);
+      --border-subtle: var(--dark-border-subtle);
+      --accent: var(--dark-accent);
+      --accent-hover: var(--dark-accent-hover);
+      --accent-bg-hover: var(--dark-accent-bg-hover);
+      --on-accent: var(--dark-on-accent);
+      --zebra-odd: var(--dark-zebra-odd);
+      --danger: var(--dark-danger);
+      --danger-bg-hover: var(--dark-danger-bg-hover);
+      --btn-bg: var(--dark-btn-bg);
+      --btn-bg-hover: var(--dark-btn-bg-hover);
+      --btn-fg: var(--dark-btn-fg);
+      --shadow-card: var(--dark-shadow-card);
+      --theme-color: var(--dark-surface);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: system-ui, sans-serif;
-      background: #f5f5f5;
-      color: #222;
+      background: var(--bg);
+      color: var(--text);
     }
 
     header {
-      background: #fff;
-      border-bottom: 1px solid #e0e0e0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
       padding: 0 1rem;
       display: flex;
       align-items: center;
@@ -41,13 +169,20 @@
       cursor: pointer;
       font-size: .9rem;
       border-bottom: 2px solid transparent;
-      color: #666;
+      color: var(--text-secondary);
     }
 
     .tab.active {
-      border-bottom-color: #5865f2;
-      color: #5865f2;
+      border-bottom-color: var(--accent);
+      color: var(--accent);
       font-weight: 600;
+    }
+
+    /* ヘッダ右端のアイコンボタン群（テーマ切替・通知） */
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: .5rem;
     }
 
     /* ビューポート: 横スライドを隠し、高さを固定して縦スクロールはページ側に任せる */
@@ -84,15 +219,15 @@
     .entry-list { display: flex; flex-direction: column; gap: .75rem; }
 
     .entry-card {
-      background: #fff;
+      background: var(--surface);
       border-radius: 8px;
       padding: 1rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      box-shadow: var(--shadow-card);
     }
 
     .entry-meta {
       font-size: .75rem;
-      color: #888;
+      color: var(--text-muted);
       margin-bottom: .35rem;
       display: flex;
       flex-direction: column;
@@ -115,7 +250,7 @@
     }
 
     .entry-title a {
-      color: #222;
+      color: var(--text);
       text-decoration: none;
     }
 
@@ -123,18 +258,18 @@
       text-decoration: underline;
     }
 
-    .zebra-even { background: #ffffff; }
-    .zebra-odd  { background: #e8f0fe; }
+    .zebra-even { background: var(--surface); }
+    .zebra-odd  { background: var(--zebra-odd); }
 
-    .empty { color: #999; font-size: .9rem; text-align: center; padding: 2rem; }
+    .empty { color: var(--text-faint); font-size: .9rem; text-align: center; padding: 2rem; }
 
     /* フィード管理 */
     .card {
-      background: #fff;
+      background: var(--surface);
       border-radius: 8px;
       padding: 1.25rem;
       margin-bottom: 1.25rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      box-shadow: var(--shadow-card);
     }
 
     .add-form { display: flex; gap: .5rem; }
@@ -144,19 +279,26 @@
     .search-box input {
       width: 100%;
       padding: .5rem .75rem;
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-strong);
       border-radius: 6px;
       font-size: 1rem;
+      background: var(--surface);
+      color: var(--text);
     }
 
     .add-form input {
       flex: 1;
       min-width: 0;
       padding: .5rem .75rem;
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-strong);
       border-radius: 6px;
       font-size: 1rem;
+      background: var(--surface);
+      color: var(--text);
     }
+
+    /* 既定のプレースホルダ色はテーマに追従しないため明示する（opacity:1 は Firefox 対策） */
+    input::placeholder { color: var(--text-secondary); opacity: 1; }
 
     button {
       padding: .5rem 1rem;
@@ -167,20 +309,22 @@
       white-space: nowrap;
     }
 
-    .btn-add { background: #5865f2; color: #fff; }
-    .btn-add:hover { background: #4752c4; }
-    .btn-delete { background: #f0f0f0; color: #c00; }
-    .btn-delete:hover { background: #fdd; }
-    .btn-rename { background: #f0f0f0; color: #444; }
-    .btn-rename:hover { background: #e0e0e0; }
-    .btn-read { background: none; border: 1px solid #ccc; color: #888; font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
-    .btn-read:hover { background: #f0f0f0; }
-    .btn-save { background: none; border: 1px solid #5865f2; color: #5865f2; font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
-    .btn-save:hover { background: #eef0fd; }
-    .btn-notify { background: #f0f0f0; color: #444; }
-    .btn-notify:hover { background: #e0e0e0; }
-    .btn-notify.active { background: #5865f2; color: #fff; }
-    .btn-notify.active:hover { background: #4752c4; }
+    .btn-add { background: var(--accent); color: var(--on-accent); }
+    .btn-add:hover { background: var(--accent-hover); }
+    .btn-delete { background: var(--btn-bg); color: var(--danger); }
+    .btn-delete:hover { background: var(--danger-bg-hover); }
+    .btn-rename { background: var(--btn-bg); color: var(--btn-fg); }
+    .btn-rename:hover { background: var(--btn-bg-hover); }
+    .btn-read { background: none; border: 1px solid var(--border-strong); color: var(--text-muted); font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
+    .btn-read:hover { background: var(--btn-bg); }
+    .btn-save { background: none; border: 1px solid var(--accent); color: var(--accent); font-size: .75rem; padding: .2rem .6rem; border-radius: 4px; }
+    .btn-save:hover { background: var(--accent-bg-hover); }
+    .btn-theme { background: var(--btn-bg); color: var(--btn-fg); }
+    .btn-theme:hover { background: var(--btn-bg-hover); }
+    .btn-notify { background: var(--btn-bg); color: var(--btn-fg); }
+    .btn-notify:hover { background: var(--btn-bg-hover); }
+    .btn-notify.active { background: var(--accent); color: var(--on-accent); }
+    .btn-notify.active:hover { background: var(--accent-hover); }
 
     .source-item {
       display: flex;
@@ -188,7 +332,7 @@
       justify-content: space-between;
       gap: .75rem;
       padding: .6rem 0;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .source-item:last-child { border-bottom: none; }
@@ -199,19 +343,24 @@
     .source-domain { font-weight: 600; font-size: .9rem; }
     .source-url {
       font-size: .75rem;
-      color: #888;
+      color: var(--text-muted);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .error { color: #c00; font-size: .85rem; margin-top: .5rem; }
+    .error { color: var(--danger); font-size: .85rem; margin-top: .5rem; }
 
     @media (max-width: 480px) {
-      header { gap: .75rem; }
+      header { gap: .75rem; padding: 0 .75rem; }
       header h1 { font-size: 1rem; }
-      .tab { padding: .9rem .75rem; font-size: .85rem; }
+      .tab { padding: .9rem .5rem; font-size: .85rem; }
       .entry-title { font-size: .95rem; }
+      /* アイコンボタンが 2 つ並ぶぶん横幅が厳しいので、狭い画面では全体を詰める。
+         収まらない場合はタブ側から先に縮むよう .tabs の min-width も解除しておく */
+      .tabs { min-width: 0; }
+      .header-actions { gap: .35rem; }
+      .header-actions button { padding: .5rem .45rem; }
     }
   </style>
 </head>
@@ -223,7 +372,10 @@
       <div class="tab" onclick="switchTab('saved')">キュー</div>
       <div class="tab" onclick="switchTab('sources')">フィード</div>
     </nav>
-    <button id="notifyBtn" class="btn-notify" onclick="toggleNotification()" style="margin-left:auto">🔕</button>
+    <div class="header-actions">
+      <button id="themeBtn" class="btn-theme" onclick="toggleTheme()" title="テーマ: 自動（OS追従）" aria-label="テーマ: 自動（OS追従）（クリックで切り替え）">🌓</button>
+      <button id="notifyBtn" class="btn-notify" onclick="toggleNotification()">🔕</button>
+    </div>
   </header>
 
   <main>
@@ -319,6 +471,66 @@
     const initialTab = location.hash.replace("#", "") || "entries";
     switchTab(TABS.includes(initialTab) ? initialTab : "entries");
     initNotification();
+
+    // --- テーマ切り替え（auto → light → dark → auto） ---
+    // data-theme 自体は <head> のインラインスクリプトで確定済みなので、ここはボタン表示と
+    // theme-color の反映だけを担当する。付随機能が本体を巻き込まないよう、タブ描画と
+    // 通知初期化より後ろに置いている。
+    const THEME_KEY = "s4s-theme"; // <head> のインラインスクリプトと同じキーにすること
+    const THEMES = ["auto", "light", "dark"];
+    const THEME_ICON = { auto: "🌓", light: "☀️", dark: "🌙" };
+    const THEME_LABEL = { auto: "自動（OS追従）", light: "ライト", dark: "ダーク" };
+    const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    // 宣言時の theme-color。auto ではこの値に戻し、media 属性による OS 追従を活かす
+    const themeMetas = [...document.querySelectorAll('meta[name="theme-color"]')]
+      .map(el => ({ el, declared: el.content }));
+
+    function storedTheme() {
+      try {
+        const t = localStorage.getItem(THEME_KEY);
+        return THEMES.includes(t) ? t : "auto";
+      } catch (e) {
+        return "auto";
+      }
+    }
+
+    // localStorage が使えない環境でも循環できるよう、現在値はメモリでも保持する
+    let currentTheme = storedTheme();
+
+    function applyTheme(theme) {
+      currentTheme = theme;
+      if (theme === "auto") delete document.documentElement.dataset.theme;
+      else document.documentElement.dataset.theme = theme;
+
+      // data-theme 反映後なので --theme-color は実効値に解決される。
+      // 手動指定時は OS 設定と食い違うため、どちらの media が当たっても同じ色になるよう両方に入れる
+      const color = getComputedStyle(document.documentElement).getPropertyValue("--theme-color").trim();
+      themeMetas.forEach(({ el, declared }) => {
+        el.content = theme === "auto" ? declared : (color || declared);
+      });
+
+      const btn = document.getElementById("themeBtn");
+      btn.textContent = THEME_ICON[theme];
+      btn.title = `テーマ: ${THEME_LABEL[theme]}`;
+      btn.setAttribute("aria-label", `テーマ: ${THEME_LABEL[theme]}（クリックで切り替え）`);
+    }
+
+    function toggleTheme() {
+      const next = THEMES[(THEMES.indexOf(currentTheme) + 1) % THEMES.length];
+      try {
+        localStorage.setItem(THEME_KEY, next);
+      } catch (e) { /* 保存できなくても表示の切り替えは行う */ }
+      applyTheme(next);
+    }
+
+    applyTheme(currentTheme);
+    try {
+      // auto のときだけ OS 設定の変更に追従する
+      // （MediaQueryList.addEventListener 非対応の古い Safari では OS 追従のみ効かない）
+      darkQuery.addEventListener("change", () => {
+        if (currentTheme === "auto") applyTheme("auto");
+      });
+    } catch (e) { /* 追従できなくても手動切り替えは動く */ }
 
     // スマホでの横スワイプによるタブ切替（縦スクロールは阻害しない）
     (function setupSwipe() {
