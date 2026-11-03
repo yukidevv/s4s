@@ -41,6 +41,12 @@ def list_entries():
   return db.fetch_entries()
 
 
+@app.post("/api/entries/read-all")
+def mark_all_read():
+  db = StartsDB()
+  return {"updated": db.mark_all_read()}
+
+
 @app.delete("/api/entries/{entry_id}")
 def delete_entry(entry_id: str):
   db = StartsDB()

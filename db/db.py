@@ -81,6 +81,11 @@ class StartsDB:
     self.conn.commit()
     return cur.rowcount > 0
 
+  def mark_all_read(self) -> int:
+    cur = self.conn.execute("UPDATE feeds SET read = 1 WHERE read = 0 AND saved = 0")
+    self.conn.commit()
+    return cur.rowcount
+
   def save_entry(self, url_2_hash: str) -> bool:
     cur = self.conn.execute("UPDATE feeds SET saved = 1 WHERE url_2_hash = ?", (url_2_hash,))
     self.conn.commit()

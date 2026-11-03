@@ -194,3 +194,43 @@ def test_rename_source_updates_all_feeds_of_same_domain(db):
     "SELECT name FROM sources WHERE url = ?", ("https://example.com/feed2",)
   ).fetchone()[0]
   assert n2 == "ソース2"
+
+
+# --- mark_all_read（新着の一括既読化） ---
+
+def _read_saved(db, link):
+  return db.conn.execute(
+    "SELECT read, saved FROM feeds WHERE url_2_hash = ?", (_hash(link),)
+  ).fetchone()
+
+
+def test_mark_all_read_marks_unread_and_returns_count(db):
+  db.register_feed("a", "https://example.com/a", "example.com", "ソース")
+  db.register_feed("b", "https://example.com/b", "example.com", "ソース")
+
+  assert db.mark_all_read() == 2
+  assert db.fetch_entries() == []
+  assert _read_saved(db, "https://example.com/a") == (1, 0)
+  assert _read_saved(db, "https://example.com/b") == (1, 0)
+
+
+def test_mark_all_read_keeps_saved(db):
+  """後で読む（saved=1）の記事は未読のまま残り、件数にも含まれない。"""
+  db.register_feed("新着", "https://example.com/a", "example.com", "ソース")
+  db.add_saved_link("保存", "https://example.com/b", "example.com", "example.com")
+
+  assert db.mark_all_read() == 1
+  assert _read_saved(db, "https://example.com/b") == (0, 1)
+  assert [s["link"] for s in db.fetch_saved()] == ["https://example.com/b"]
+
+
+def test_mark_all_read_excludes_already_read_from_count(db):
+  db.register_feed("既読", "https://example.com/a", "example.com", "ソース")
+  db.register_feed("未読", "https://example.com/b", "example.com", "ソース")
+  db.delete_entry(_hash("https://example.com/a"))
+
+  assert db.mark_all_read() == 1
+
+
+def test_mark_all_read_no_targets_returns_zero(db):
+  assert db.mark_all_read() == 0
