@@ -86,3 +86,29 @@ def test_patch_source_missing_returns_404(app_client):
     "/api/sources", json={"url": "https://notexist.com/feed", "name": "新名"}
   )
   assert resp.status_code == 404
+
+
+# --- POST /api/entries/read-all（新着の一括既読化） ---
+
+def test_read_all_marks_entries_and_keeps_saved(app_client, tmp_path):
+  db = StartsDB(db_path=str(tmp_path / "api.db"))
+  db.register_feed("a", "https://example.com/a", "example.com", "ソース")
+  db.register_feed("b", "https://example.com/b", "example.com", "ソース")
+  db.register_feed("既読", "https://example.com/c", "example.com", "ソース")
+  db.delete_entry(StartsDB._hash("https://example.com/c"))
+  db.add_saved_link("保存", "https://example.com/d", "example.com", "example.com")
+  db.conn.close()
+
+  resp = app_client.post("/api/entries/read-all")
+  assert resp.status_code == 200
+  assert resp.json() == {"updated": 2}
+
+  assert app_client.get("/api/entries").json() == []
+  saved = app_client.get("/api/saved").json()
+  assert [s["link"] for s in saved] == ["https://example.com/d"]
+
+
+def test_read_all_no_targets_returns_zero(app_client):
+  resp = app_client.post("/api/entries/read-all")
+  assert resp.status_code == 200
+  assert resp.json() == {"updated": 0}

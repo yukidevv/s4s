@@ -186,6 +186,9 @@
       padding: 1.5rem 1rem;
     }
 
+    /* 新着タブの一括操作。[hidden] が効くよう display は指定しない */
+    .entries-toolbar { text-align: right; margin-bottom: .75rem; }
+
     /* エントリ一覧 */
     .entry-list { display: flex; flex-direction: column; gap: .75rem; }
 
@@ -354,6 +357,10 @@
       <!-- 新着一覧 -->
       <div id="page-entries" class="page active">
         <div class="page-inner">
+          <div id="entriesToolbar" class="entries-toolbar" hidden>
+            <button class="btn-read" onclick="markAllRead()">全て既読にする</button>
+            <div id="markAllReadError" class="error"></div>
+          </div>
           <div id="entryList" class="entry-list"></div>
         </div>
       </div>
@@ -530,6 +537,7 @@
 
       if (entries.length === 0) {
         el.innerHTML = '<div class="empty">新着エントリはありません</div>';
+        syncEntriesToolbar();
         return;
       }
 
@@ -561,6 +569,7 @@
           <div class="entry-title"><a href="${e.link}" target="_blank" rel="noopener">${e.title ?? "(タイトルなし)"}</a></div>
         </div>`);
       }).join("");
+      syncEntriesToolbar();
     }
 
     let sourcesCache = [];
@@ -657,16 +666,45 @@
       });
     }
 
+    // 新着が0件なら一括操作ボタンを隠す
+    function syncEntriesToolbar() {
+      const hasEntries = document.querySelector("#entryList .entry-card") !== null;
+      document.getElementById("entriesToolbar").hidden = !hasEntries;
+    }
+
+    async function markAllRead() {
+      if (!confirm("全ての新着を既読にしますか？\n（後で読むの記事は対象外です）")) return;
+      const errEl = document.getElementById("markAllReadError");
+      errEl.textContent = "";
+
+      let res;
+      try {
+        res = await fetch(api("/api/entries/read-all"), { method: "POST" });
+      } catch {
+        errEl.textContent = "通信に失敗しました";
+        return;
+      }
+      if (!res.ok) {
+        // 認証エラー（403）などは本文が JSON ではない
+        const data = await res.json().catch(() => ({}));
+        errEl.textContent = data.detail ?? "エラーが発生しました";
+        return;
+      }
+      location.reload();
+    }
+
     async function markRead(id) {
       await fetch(api(`/api/entries/${id}`), { method: "DELETE" });
       document.getElementById(`entry-${id}`).remove();
       reapplyZebra();
+      syncEntriesToolbar();
     }
 
     async function saveEntry(id) {
       await fetch(api(`/api/entries/${id}/save`), { method: "POST" });
       document.getElementById(`entry-${id}`).remove();
       reapplyZebra();
+      syncEntriesToolbar();
     }
 
     async function loadSaved() {
