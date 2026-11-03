@@ -112,3 +112,36 @@ def test_read_all_no_targets_returns_zero(app_client):
   resp = app_client.post("/api/entries/read-all")
   assert resp.status_code == 200
   assert resp.json() == {"updated": 0}
+
+
+def test_entry_routes_still_work_after_read_all_added(app_client, tmp_path):
+  db = StartsDB(db_path=str(tmp_path / "api.db"))
+  db.register_feed("既読にする", "https://example.com/a", "example.com", "ソース")
+  db.register_feed("保存する", "https://example.com/b", "example.com", "ソース")
+  db.conn.close()
+  read_id = StartsDB._hash("https://example.com/a")
+  save_id = StartsDB._hash("https://example.com/b")
+
+  resp = app_client.delete(f"/api/entries/{read_id}")
+  assert resp.status_code == 200
+  assert resp.json() == {"deleted": read_id}
+
+  resp = app_client.post(f"/api/entries/{save_id}/save")
+  assert resp.status_code == 200
+  assert resp.json() == {"saved": save_id}
+
+  assert app_client.get("/api/entries").json() == []
+  saved = app_client.get("/api/saved").json()
+  assert [s["id"] for s in saved] == [save_id]
+
+
+def test_read_all_requires_token(app_client, tmp_path, monkeypatch):
+  db = StartsDB(db_path=str(tmp_path / "api.db"))
+  db.register_feed("a", "https://example.com/a", "example.com", "ソース")
+  db.conn.close()
+  monkeypatch.setenv("STARTS_TOKEN", "test-token")
+
+  resp = app_client.post("/api/entries/read-all")
+  assert resp.status_code == 403
+  # 拒否されたリクエストでは既読化されない
+  assert len(app_client.get("/api/entries?token=test-token").json()) == 1

@@ -358,7 +358,7 @@
       <div id="page-entries" class="page active">
         <div class="page-inner">
           <div id="entriesToolbar" class="entries-toolbar" hidden>
-            <button class="btn-read" onclick="markAllRead()">全て既読にする</button>
+            <button id="markAllReadBtn" class="btn-read" onclick="markAllRead()">全て既読にする</button>
             <div id="markAllReadError" class="error"></div>
           </div>
           <div id="entryList" class="entry-list"></div>
@@ -534,6 +534,7 @@
       const res = await fetch(api("/api/entries"));
       const entries = await res.json();
       const el = document.getElementById("entryList");
+      document.getElementById("markAllReadError").textContent = "";
 
       if (entries.length === 0) {
         el.innerHTML = '<div class="empty">新着エントリはありません</div>';
@@ -674,7 +675,9 @@
 
     async function markAllRead() {
       if (!confirm("全ての新着を既読にしますか？\n（後で読むの記事は対象外です）")) return;
+      const btn = document.getElementById("markAllReadBtn");
       const errEl = document.getElementById("markAllReadError");
+      btn.disabled = true;
       errEl.textContent = "";
 
       let res;
@@ -682,12 +685,14 @@
         res = await fetch(api("/api/entries/read-all"), { method: "POST" });
       } catch {
         errEl.textContent = "通信に失敗しました";
+        btn.disabled = false;
         return;
       }
       if (!res.ok) {
         // 認証エラー（403）などは本文が JSON ではない
         const data = await res.json().catch(() => ({}));
         errEl.textContent = data.detail ?? "エラーが発生しました";
+        btn.disabled = false;
         return;
       }
       location.reload();
